@@ -4,9 +4,9 @@ Minecraft-Panel (Node): Konsole, Dateien, Plugins, Shop, Tickets, Server starten
 
 ## Wichtig
 
-Öffentliche Website (wie OnlyClient): https://websitenprogramer.github.io/eyehost/
+Öffentliche Website: https://websitenprogramer.github.io/eyehost/
 
-**GitHub hostet die Website.** Das Panel (Login, Server starten, echte Paysafecard-Zahlung) läuft auf dem Host-PC: `http://localhost:3000`
+Dort geht Anmelden, Tickets, Shop und Server steuern. Das Panel auf dem Host-PC muss dafür laufen.
 
 Eye Host muss auf einem **richtigen Rechner** laufen, der immer an ist:
 
