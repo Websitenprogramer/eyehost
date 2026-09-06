@@ -148,8 +148,16 @@ async function loadServers() {
         <button class="btn btn-n btn-sm" type="button" onclick="ctrl('${s.id}','stop')">Stop</button>
         <button class="btn btn-n btn-sm" type="button" onclick="ctrl('${s.id}','restart')">Neustart</button>
         <a class="btn btn-n btn-sm" href="${panelUrl()}">Konsole</a>
+        ${s.canDelete ? `<button class="btn btn-r btn-sm" type="button" onclick="delSrv('${s.id}','${esc(s.name)}')">Löschen</button>` : ''}
       </div>
     </div>`).join('');
+}
+
+async function delSrv(id, name) {
+  if (!confirm('"' + name + '" wirklich löschen?')) return;
+  const r = await api('/api/servers/' + id, 'DELETE');
+  toast(r.ok ? 'Server gelöscht.' : (r.msg || 'Fehler'));
+  if (r.ok) loadServers();
 }
 
 async function ctrl(id, action) {
@@ -158,19 +166,103 @@ async function ctrl(id, action) {
   setTimeout(loadServers, 2000);
 }
 
+let shopCache = [];
+
+function money(n) {
+  return Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+}
+
+function specLines(p) {
+  return [
+    ['RAM', p.ram || '–', 'Arbeitsspeicher. Mehr RAM = mehr Plugins und eine größere Welt ohne Lag.'],
+    ['CPU', p.cpu || '–', 'Rechenkerne für Chunks, Redstone und Events.'],
+    ['SSD', p.disk || '–', 'NVMe-Speicher für Welt, Plugins und Backups.'],
+    ['Spieler', p.players != null ? String(p.players) : '–', 'Empfohlene Slots, damit der Server flüssig bleibt.'],
+    ['Backups', p.backups != null ? String(p.backups) : '–', 'Wie viele Sicherungen wir für das Paket vorsehen.'],
+    ['Standort', p.loc || 'Deutschland', 'Rechenzentrum. DE = niedrige Ping-Zeiten.'],
+    ['Schutz', p.ddos ? 'DDoS inklusive' : 'Standard', 'Schutz gegen Angriffe auf den Server.'],
+    ['Laufzeit', (p.days || 30) + ' Tage', 'Nach der Zahlung ist das Paket so lange aktiv.'],
+  ];
+}
+
+function renderShop(plans) {
+  const box = $('shop-list');
+  if (!box) return;
+  shopCache = plans || [];
+  if (!shopCache.length) {
+    box.innerHTML = '<div class="card"><p class="note">Shop lädt nicht. Der Host-PC muss laufen.</p></div>';
+    return;
+  }
+  box.innerHTML = shopCache.map((p) => `
+    <article class="card ${p.id === 'plus' ? 'on' : ''}">
+      ${p.id === 'plus' ? '<div class="badge">Beliebt</div>' : ''}
+      <h3>${esc(p.name)}</h3>
+      <p class="plan-desc">${esc(p.desc || '')}</p>
+      <div class="price">${money(p.price)}<span> / 30 Tage</span></div>
+      <div class="specs">
+        ${specLines(p).map(([k, v]) => `<div class="spec"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-n" type="button" onclick="openSpecs('${p.id}')">Specs ansehen</button>
+        <button class="btn btn-p" type="button" onclick="buy('${p.id}')">Jetzt zahlen</button>
+      </div>
+    </article>`).join('');
+}
+
+function openSpecs(id) {
+  const p = shopCache.find((x) => x.id === id);
+  if (!p || !$('spec-box')) return;
+  $('spec-box').innerHTML = `
+    <div class="spec-head">
+      <div>
+        <h3 style="margin:0">${esc(p.name)}</h3>
+        <p class="note" style="margin:6px 0 0">${esc(p.desc || '')}</p>
+      </div>
+      <div class="price" style="font-size:28px">${money(p.price)}<span> / 30 Tage</span></div>
+    </div>
+    <div class="spec-grid">
+      ${specLines(p).map(([k, v, why]) => `
+        <div class="spec-tile">
+          <small>${esc(k)}</small>
+          <b>${esc(v)}</b>
+          <p>${esc(why)}</p>
+        </div>`).join('')}
+    </div>
+    <div class="card-actions">
+      <button class="btn btn-n" type="button" onclick="closeSpecs()">Schließen</button>
+      <button class="btn btn-p" type="button" onclick="closeSpecs();buy('${p.id}')">Dieses Paket kaufen</button>
+    </div>`;
+  $('spec-modal').classList.add('on');
+}
+
+function closeSpecs() {
+  if ($('spec-modal')) $('spec-modal').classList.remove('on');
+}
+
+async function loadShop() {
+  if (PAGE !== 'shop' || !$('shop-list')) return;
+  const r = await api('/api/shop');
+  renderShop(r.ok ? (r.plans || []) : []);
+}
+
 async function buy(planId) {
   if (!token) {
     openAuth('login');
     toast('Bitte zuerst anmelden.');
     return;
   }
-  const r = await api('/api/shop/buy', 'POST', { planId });
+  const r = await api('/api/shop/buy', 'POST', { planId, instant: role === 'admin' ? undefined : undefined });
+  if (r.ok && r.instant) {
+    toast('Server ist angelegt.');
+    location.href = 'me.html';
+    return;
+  }
   if (r.ok && r.redirect) {
     toast('Weiter zu Paysafecard…');
     location.href = r.redirect;
     return;
   }
-  toast(r.msg || 'Zahlung nicht möglich. Paysafe-Keys im Panel eintragen.');
+  toast(r.msg || 'Zahlung nicht möglich. Im Admin die Paysafe-Keys eintragen.');
 }
 
 function tkStatus(s) {
@@ -310,6 +402,7 @@ async function sendTicket() {
 }
 
 async function boot() {
+  if (PAGE === 'shop') loadShop();
   if (!token) {
     renderUser();
     if (PAGE === 'me') openAuth('login');
@@ -328,6 +421,7 @@ async function boot() {
   role = meR.role || 'user';
   localStorage.setItem('eh3u', me);
   renderUser();
+  if (PAGE === 'shop') loadShop();
   if (PAGE === 'me') {
     loadServers();
     loadTickets();

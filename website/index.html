@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css?v=5"/>
+  <link rel="stylesheet" href="style.css?v=7"/>
 </head>
 <body data-page="shop">
   <header class="top">
@@ -34,8 +34,8 @@
   <main>
     <section class="hero" id="top">
       <p class="kicker">Minecraft Hosting · Deutschland</p>
-      <h1>Server kaufen.<br>Sofort loslegen.</h1>
-      <p class="lead">Wähle ein Paket und zahle mit <span class="psc">paysafecard</span>. Nach dem Anmelden öffnest du oben <b>Mein Bereich</b>.</p>
+      <h1>Dein Minecraft-Server.<br>In unter einer Minute.</h1>
+      <p class="lead">Paket wählen, mit <span class="psc">paysafecard</span> zahlen, sofort joinen. PIN nur auf der offiziellen Paysafe-Seite.</p>
       <div class="hero-actions">
         <a class="btn btn-p" href="#shop">Paket wählen</a>
         <button class="btn btn-n" type="button" onclick="openAuth('login')">Anmelden</button>
@@ -50,43 +50,8 @@
 
     <section id="shop">
       <h2>Pakete</h2>
-      <p class="sub">Preis für 30 Tage. Nach der Zahlung wird die Instanz eingerichtet.</p>
-      <div class="grid">
-        <article class="card">
-          <h3>Starter</h3>
-          <div class="price">4,99 €<span>/30 Tage</span></div>
-          <ul>
-            <li>2G RAM</li>
-            <li>1 vCore</li>
-            <li>15 GB NVMe</li>
-            <li>10 Slots</li>
-          </ul>
-          <button class="btn btn-p" type="button" onclick="buy('starter')">Mit Paysafecard kaufen</button>
-        </article>
-        <article class="card on">
-          <div class="badge">Beliebt</div>
-          <h3>Plus</h3>
-          <div class="price">8,99 €<span>/30 Tage</span></div>
-          <ul>
-            <li>4G RAM</li>
-            <li>2 vCores</li>
-            <li>30 GB NVMe</li>
-            <li>20 Slots</li>
-          </ul>
-          <button class="btn btn-p" type="button" onclick="buy('plus')">Mit Paysafecard kaufen</button>
-        </article>
-        <article class="card">
-          <h3>Pro</h3>
-          <div class="price">14,99 €<span>/30 Tage</span></div>
-          <ul>
-            <li>8G RAM</li>
-            <li>3 vCores</li>
-            <li>60 GB NVMe</li>
-            <li>40 Slots</li>
-          </ul>
-          <button class="btn btn-p" type="button" onclick="buy('pro')">Mit Paysafecard kaufen</button>
-        </article>
-      </div>
+      <p class="sub">Alle Specs offen — RAM, CPU, SSD, Slots, Backups, Standort. Preis für 30 Tage.</p>
+      <div class="grid" id="shop-list"></div>
     </section>
 
     <section id="pay">
@@ -97,6 +62,10 @@
       </div>
     </section>
   </main>
+
+  <div class="modal" id="spec-modal" onclick="if(event.target===this)closeSpecs()">
+    <div class="box spec-box" id="spec-box"></div>
+  </div>
 
   <div class="modal" id="auth-modal">
     <div class="box">
@@ -113,7 +82,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <script src="config.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="config.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

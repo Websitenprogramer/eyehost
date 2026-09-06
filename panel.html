@@ -276,9 +276,19 @@ body{background:
   border-color:rgba(91,140,255,.45);
   box-shadow:0 16px 40px rgba(0,0,0,.28),0 0 0 1px rgba(91,140,255,.12)
 }
-.plan-card.hot{border-color:rgba(168,85,247,.45);box-shadow:0 0 32px rgba(168,85,247,.18)}
+.plan-card.hot{border-color:rgba(168,85,247,.55);box-shadow:0 0 40px rgba(168,85,247,.22);position:relative;overflow:hidden}
+.plan-card.hot::after{content:'';position:absolute;inset:-40% -20% auto;height:90px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);transform:rotate(12deg);animation:shine 4.5s ease-in-out infinite}
+@keyframes shine{0%,100%{transform:translateX(-30%) rotate(12deg)}50%{transform:translateX(30%) rotate(12deg)}}
 .psc{display:inline-flex;align-items:center;gap:6px;background:#111;color:#c6f31a;border:1px solid #2a2a2a;border-radius:99px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.04em}
-.hero-pay{background:linear-gradient(135deg,rgba(198,243,26,.08),rgba(91,140,255,.08));border:1px solid var(--b1);border-radius:18px;padding:16px 18px;margin-bottom:18px}
+.hero-pay{background:linear-gradient(135deg,rgba(198,243,26,.1),rgba(91,140,255,.1));border:1px solid var(--b1);border-radius:18px;padding:18px 20px;margin-bottom:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.pay-dot{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px rgba(239,68,68,.15)}
+.pay-dot.on{background:var(--green);box-shadow:0 0 0 4px rgba(16,185,129,.18)}
+.plan-tag{align-self:flex-start;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:99px;background:rgba(168,85,247,.16);color:#c4b5fd}
+.srv-card{position:relative;overflow:hidden}
+.srv-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--b2)}
+.srv-card.live::before{background:var(--green);box-shadow:0 0 16px var(--green)}
+.del-ghost{opacity:.75}
+.del-ghost:hover{opacity:1}
 .htab{transition:background .15s,color .15s,transform .15s}
 .htab.on{background:var(--accent-dim);color:var(--accent-h)}
 .btn{transition:transform .12s,background .15s,box-shadow .15s}
@@ -330,7 +340,6 @@ body{background:
       <div class="tb-title" style="font-size:18px">Eye<em style="color:var(--accent-h);font-style:normal">Host</em></div>
       <div class="home-nav">
         <button class="htab on" data-tab="servers" onclick="homeTab('servers',this)">Konsole</button>
-        <button class="htab" data-tab="shop" onclick="homeTab('shop',this)">Shop</button>
         <button class="htab" data-tab="support" onclick="homeTab('support',this)">Support <span id="tk-badge" class="psc" style="display:none;margin-left:4px">0</span></button>
         <button class="htab admin-only" data-tab="admin" onclick="homeTab('admin',this)">Admin</button>
       </div>
@@ -347,7 +356,7 @@ body{background:
           <div class="tb-title" style="font-size:28px;letter-spacing:-.04em">Deine Instanzen</div>
           <div class="tb-sub">Starten, Dateien, Plugins — wie bei einem echten Host.</div>
         </div>
-        <button class="btn btn-p" onclick="homeTab('shop')">Server kaufen</button>
+        <a class="btn btn-p" href="/#shop">Server kaufen</a>
       </div>
       <div class="home-kpis">
         <div class="sc"><div class="sc-lbl">Server</div><div class="sc-val b" id="kpi-n">0</div><div class="sc-badge b">auf deinem Account</div></div>
@@ -355,20 +364,6 @@ body{background:
         <div class="sc"><div class="sc-lbl">Standort</div><div class="sc-val" style="font-size:18px">Deutschland</div><div class="sc-badge b">niedrige Latenz</div></div>
       </div>
       <div class="srv-grid" id="srv-list"></div>
-    </div>
-
-    <div class="hpanel" id="htab-shop">
-      <div class="home-head">
-        <div>
-          <div class="tb-title" style="font-size:28px;letter-spacing:-.04em">Minecraft Server</div>
-          <div class="tb-sub">Specs ansehen, dann mit Paysafecard bezahlen. PIN nur auf der offiziellen Seite.</div>
-        </div>
-      </div>
-      <div class="hero-pay">
-        <span class="psc">paysafecard</span>
-        <div class="tb-sub" style="margin-top:8px">Sichere Zahlung: du wirst zu Paysafe weitergeleitet. Wir speichern keine PIN, keine Kartennummer, kein Guthaben.</div>
-      </div>
-      <div class="shop-grid" id="shop-list"></div>
     </div>
 
     <div class="hpanel" id="htab-support">
@@ -406,8 +401,26 @@ body{background:
 
     <div class="hpanel admin-only" id="htab-admin">
       <div class="admin-box">
+        <div class="tb-title" style="font-size:15px">Zahlung aktivieren</div>
+        <div class="tb-sub">Ohne Keys kann niemand zahlen. Keys vom Paysafe Business Portal. PIN kommt nie ins Panel.</div>
+        <div class="hero-pay" style="margin:14px 0 0">
+          <div class="pay-dot" id="adm-pay-dot"></div>
+          <div><b id="adm-pay-state">–</b><div class="tb-sub" id="adm-pay-hint">Keys eintragen, dann speichern.</div></div>
+        </div>
+        <div class="set-grid" style="margin-top:14px">
+          <div class="field"><label>Öffentliche URL (leer = automatisch)</label><input type="text" id="adm-pub" placeholder="https://deine-domain.de"/></div>
+          <div class="field"><label>Umgebung</label>
+            <select id="adm-psc-env"><option value="test">Test</option><option value="live">Live</option></select>
+          </div>
+          <div class="field"><label>API Username</label><input type="text" id="adm-psc-user" autocomplete="off"/></div>
+          <div class="field"><label>API Key</label><input type="password" id="adm-psc-key" placeholder="leer = unverändert" autocomplete="off"/></div>
+          <div class="field"><label>Account ID</label><input type="text" id="adm-psc-acc" autocomplete="off"/></div>
+        </div>
+        <button class="btn btn-p" style="margin-top:12px" onclick="saveAdminPay()">Zahlung speichern</button>
+      </div>
+      <div class="admin-box">
         <div class="tb-title" style="font-size:15px">Server erstellen</div>
-        <div class="tb-sub">Nur für dich. Optional direkt an eine registrierte E-Mail geben.</div>
+        <div class="tb-sub">Nur für dich. Danach kannst du ihn löschen. Optional direkt an eine registrierte E-Mail geben.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
           <input class="inp" id="new-srv" placeholder="Servername" style="margin:0;width:200px"/>
           <input class="inp" id="new-srv-email" placeholder="E-Mail zum Vergeben (optional)" style="margin:0;width:260px"/>
@@ -864,6 +877,10 @@ function applyRole() {
 
 let currentHomeTab = 'servers';
 function homeTab(name, btn) {
+  if (name === 'shop') {
+    location.href = '/#shop';
+    return;
+  }
   currentHomeTab = name;
   document.querySelectorAll('.htab').forEach(b => b.classList.remove('on'));
   document.querySelectorAll('.hpanel').forEach(p => p.classList.remove('on'));
@@ -875,6 +892,7 @@ function homeTab(name, btn) {
   const panel = $('htab-'+name);
   if (panel) panel.classList.add('on');
   if (name === 'support' || name === 'admin') loadTickets();
+  if (name === 'admin') loadAdminPay();
 }
 
 let tkWatch = null;
@@ -890,10 +908,23 @@ async function handlePayReturn() {
   const u = new URL(location.href);
   if (!u.pathname.startsWith('/pay/')) return;
   const orderId = u.searchParams.get('order');
+  const failed = u.searchParams.get('ok') === '0';
   history.replaceState({}, '', '/');
   if (!orderId || !token) return;
-  const r = await api('/api/pay/finish','POST',{orderId});
-  toast(r.ok ? 'Zahlung bestätigt. Server wird eingerichtet.' : (r.msg || 'Zahlung noch offen'), r.ok ? 'ok' : 'err');
+  if (failed) {
+    toast('Zahlung abgebrochen oder fehlgeschlagen.', 'err');
+    showHome();
+    return;
+  }
+  toast('Zahlung wird bestätigt…', 'info');
+  let r = { ok: false };
+  for (let i = 0; i < 6; i++) {
+    r = await api('/api/pay/finish','POST',{orderId});
+    if (r.ok) break;
+    await new Promise((ok) => setTimeout(ok, 1200));
+  }
+  toast(r.ok ? 'Bezahlt. Dein Server ist bereit.' : (r.msg || 'Zahlung noch offen — bitte kurz warten und Shop neu laden.'), r.ok ? 'ok' : 'err');
+  currentHomeTab = 'servers';
   showHome();
 }
 
@@ -918,6 +949,7 @@ async function showHome() {
   $('home').style.display = 'block';
   applyRole();
   if (currentHomeTab === 'admin' && role !== 'admin') currentHomeTab = 'servers';
+  if (currentHomeTab === 'shop') currentHomeTab = 'servers';
   homeTab(currentHomeTab);
   if ($('home-hello')) $('home-hello').textContent = meName || 'Account';
   const [r, shop, tix, ords] = await Promise.all([
@@ -927,6 +959,8 @@ async function showHome() {
     api('/api/orders'),
   ]);
   shopCache = shop.ok ? shop.plans : [];
+  paysafeOn = !!(shop.ok && shop.paysafe);
+  renderPayState(shop);
   renderShop(shopCache);
   renderTickets(tix.ok ? tix.tickets : []);
   renderOrders(ords.ok ? ords.orders : []);
@@ -936,17 +970,17 @@ async function showHome() {
   if ($('kpi-on')) $('kpi-on').textContent = list.filter(s => s.running).length;
   if (!r.ok) { box.innerHTML = `<div class="empty">${r.msg||'Fehler'}</div>`; return; }
   if (!list.length) {
-    box.innerHTML = '<div class="empty">Noch keine Instanz.<br>Im Shop kaufst du einen Server — erst Specs, dann Bezahlen.</div>';
+    box.innerHTML = '<div class="empty">Noch keine Instanz.<br>Server kaufst du auf der <a href="/#shop" style="color:var(--accent-h)">Website</a>, nicht in der Konsole.</div>';
     return;
   }
   box.innerHTML = list.map(s => {
     const canAssign = role === 'admin' && !s.locked;
     return `
-    <div class="srv-card">
+    <div class="srv-card ${s.running?'live':''}">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
           <div class="pcard-name" style="font-size:18px">${esc(s.name)}</div>
-          <div style="color:var(--t3);font-size:11px;margin-top:3px">Paper · ${esc(s.loc||'Deutschland')} · Port ${s.port}</div>
+          <div style="color:var(--t3);font-size:11px;margin-top:3px">Paper · ${esc(s.loc||'Deutschland')} · Port ${s.port}${s.owner?(' · '+esc(s.owner)):''}</div>
         </div>
         <div class="pill ${s.running?'on':'off'}"><div class="pdot ${s.running?'pulse':''}"></div>${s.running?'Online':'Offline'}</div>
       </div>
@@ -954,11 +988,22 @@ async function showHome() {
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto">
         <button class="btn btn-p" onclick="openServer('${s.id}','${esc(s.name)}')">Konsole öffnen</button>
         ${canAssign?`<button class="btn btn-n btn-sm" onclick="assignServer('${s.id}')">Per E-Mail vergeben</button>`:''}
+        ${s.canDelete?`<button class="btn btn-r btn-sm del-ghost" onclick="deleteServer('${s.id}','${esc(s.name)}')">Löschen</button>`:''}
       </div>
     </div>`;
   }).join('');
 }
 let shopCache = [];
+let paysafeOn = false;
+function renderPayState(shop) {
+  const on = !!(shop && shop.paysafe);
+  paysafeOn = on;
+  [['pay-dot','pay-state'],['adm-pay-dot','adm-pay-state']].forEach(([d,s]) => {
+    if ($(d)) $(d).classList.toggle('on', on);
+    if ($(s)) $(s).textContent = on ? 'Zahlung ist live — Kunden können zahlen.' : 'Zahlung noch aus. Keys im Admin eintragen.';
+  });
+  if ($('adm-pay-hint')) $('adm-pay-hint').textContent = on ? 'Paysafecard nimmt Zahlungen an.' : 'Ohne API Username + Key geht der Checkout nicht.';
+}
 function planById(id) { return shopCache.find(p => p.id === id); }
 function specLines(p) {
   return [
@@ -977,14 +1022,15 @@ function renderShop(plans) {
   if (!box) return;
   if (!plans.length) { box.innerHTML = '<div class="empty">Shop lädt nicht.</div>'; return; }
   box.innerHTML = plans.map(p => `
-    <div class="plan-card ${p.id==='pro'?'hot':''}">
-      <div class="pcard-name" style="font-size:20px">${esc(p.name)}</div>
+    <div class="plan-card ${p.id==='plus'||p.id==='pro'?'hot':''}">
+      ${p.id==='plus'?'<div class="plan-tag">Am beliebtesten</div>':''}
+      <div class="pcard-name" style="font-size:22px">${esc(p.name)}</div>
       <div class="tb-sub">${esc(p.desc||'')}</div>
       <div class="price">${money(p.price)}<span>/ 30 Tage</span></div>
       ${specLines(p).slice(0,5).map(([k,v]) => `<div class="spec"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
-      <div style="display:flex;gap:8px;margin-top:auto">
+      <div style="display:flex;gap:8px;margin-top:auto;flex-wrap:wrap">
         <button class="btn btn-n" style="flex:1" onclick="openSpecs('${p.id}')">Alle Specs</button>
-        <button class="btn btn-p" style="flex:1" onclick="openPay('${p.id}')">Kaufen</button>
+        <button class="btn btn-p" style="flex:1" onclick="openPay('${p.id}')">${paysafeOn?'Jetzt zahlen':'Kaufen'}</button>
       </div>
     </div>`).join('');
 }
@@ -1007,16 +1053,18 @@ function openPay(id) {
   const p = planById(id);
   if (!p) return;
   $('modal-box').innerHTML = `
-    <div class="tb-title" style="font-size:22px">Paysafecard</div>
-    <div class="tb-sub">Paket ${esc(p.name)} · ${money(p.price)} · kein Name jetzt</div>
+    <div class="tb-title" style="font-size:26px;letter-spacing:-.04em">Checkout</div>
+    <div class="tb-sub">Paket ${esc(p.name)} · ${money(p.price)} für 30 Tage</div>
     ${specLines(p).slice(0,4).map(([k,v]) => `<div class="spec"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
     <div class="hero-pay" style="margin-top:16px">
       <span class="psc">paysafecard</span>
-      <div class="tb-sub" style="margin-top:8px">Du gehst zur offiziellen Paysafe-Seite und gibst dort die 16-stellige PIN ein. Bei uns wird die PIN nicht gespeichert und nicht abgefragt.</div>
+      <div class="tb-sub" style="margin-top:8px">Du landest auf der offiziellen Paysafe-Seite und gibst dort die 16-stellige PIN ein. Bei uns wird die PIN nicht gespeichert.</div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:18px">
+    ${!paysafeOn && role!=='admin' ? '<div class="tb-sub" style="color:var(--red);margin-top:12px">Zahlung ist gerade noch nicht aktiv. Bitte später oder ein Ticket schreiben.</div>' : ''}
+    <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
       <button class="btn btn-n" onclick="closeModal()">Abbrechen</button>
-      <button class="btn btn-p" onclick="buyPlan('${p.id}')">Mit Paysafecard zahlen</button>
+      <button class="btn btn-p" ${!paysafeOn && role!=='admin'?'disabled':''} onclick="buyPlan('${p.id}')">Mit Paysafecard zahlen</button>
+      ${role==='admin'?`<button class="btn btn-g" onclick="buyPlan('${p.id}',true)">Als Admin sofort anlegen</button>`:''}
     </div>`;
   $('modal').classList.add('on');
 }
@@ -1147,14 +1195,58 @@ function renderOrders(list) {
       : 'Keine offenen Zahlungen.';
   }
 }
-async function buyPlan(planId) {
-  const r = await api('/api/shop/buy','POST',{planId});
+async function buyPlan(planId, instant) {
+  const r = await api('/api/shop/buy','POST',{planId, instant: !!instant});
+  if (r.ok && r.instant) {
+    closeModal();
+    toast('✅ Server liegt jetzt in deiner Liste.','ok');
+    currentHomeTab = 'servers';
+    showHome();
+    return;
+  }
   if (r.ok && r.redirect) {
-    toast('Weiterleitung zu Paysafecard…','ok');
+    toast('Weiter zu Paysafecard…','ok');
     location.href = r.redirect;
     return;
   }
   toast('❌ '+(r.msg||'Zahlung nicht möglich'),'err');
+}
+async function deleteServer(id, name) {
+  if (!confirm('"'+name+'" wirklich löschen? Dateien sind dann weg.')) return;
+  const old = serverId; serverId = '';
+  const r = await api('/api/servers/'+id,'DELETE');
+  serverId = old;
+  toast(r.ok?'🗑 Server gelöscht':'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) {
+    if (old === id) { serverId = ''; localStorage.removeItem('eh3s'); }
+    showHome();
+  }
+}
+async function loadAdminPay() {
+  const r = await api('/api/settings');
+  if (!r.ok) return;
+  const s = r.settings || {};
+  if ($('adm-pub')) $('adm-pub').value = s.publicBaseUrl || '';
+  if ($('adm-psc-user')) $('adm-psc-user').value = s.paysafeUser || '';
+  if ($('adm-psc-acc')) $('adm-psc-acc').value = s.paysafeAccountId || '';
+  if ($('adm-psc-env')) $('adm-psc-env').value = s.paysafeEnv || 'test';
+  if ($('adm-psc-key')) $('adm-psc-key').placeholder = s.paysafeKeySet ? 'gesetzt — leer lassen' : 'API Key';
+  renderPayState({ paysafe: !!s.paysafeReady });
+}
+async function saveAdminPay() {
+  const r = await api('/api/settings','POST',{
+    publicBaseUrl: ($('adm-pub')||{}).value ? $('adm-pub').value.trim() : '',
+    paysafeUser: ($('adm-psc-user')||{}).value ? $('adm-psc-user').value.trim() : '',
+    paysafeKey: ($('adm-psc-key')||{}).value ? $('adm-psc-key').value.trim() : '',
+    paysafeAccountId: ($('adm-psc-acc')||{}).value ? $('adm-psc-acc').value.trim() : '',
+    paysafeEnv: ($('adm-psc-env')||{}).value || 'test',
+  });
+  toast(r.ok?(r.paysafeReady?'Paysafecard ist aktiv. Kunden können zahlen.':'Gespeichert. Username + Key fehlen noch.'):'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) {
+    paysafeOn = !!r.paysafeReady;
+    renderPayState({ paysafe: !!r.paysafeReady });
+    renderShop(shopCache);
+  }
 }
 async function fulfillOrder(id) {
   const r = await api('/api/orders/'+id+'/fulfill','POST',{});

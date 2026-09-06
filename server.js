@@ -207,11 +207,14 @@ for (const t of DB.tickets) {
   }
 }
 for (const u of DB.users) {
-  u.balance = 0;
+  if (u.balance == null) u.balance = 0;
   if (!u.email) u.email = u.username === 'admin' ? 'admin@eyehost.local' : '';
 }
-DB.servers = (DB.servers || []).filter((s) => s.id !== 'bdb0ff85');
-DB.orders = [];
+DB.servers = (DB.servers || []).filter((s) => {
+  const name = String(s.name || '').toLowerCase();
+  return s.id !== 'bdb0ff85' && s.id !== '6f5d632b' && name !== 'zomba test';
+});
+if (!Array.isArray(DB.orders)) DB.orders = [];
 for (const o of DB.orders) {
   if (!o.status) o.status = o.serverId ? 'done' : 'pending';
 }
@@ -250,10 +253,21 @@ function paysafeBase() {
 }
 
 function publicBase(req) {
-  if (CONFIG.publicBaseUrl) return String(CONFIG.publicBaseUrl).replace(/\/$/, '');
   const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
-  const host = req.headers.host || `localhost:${CONFIG.webPort}`;
-  return `${proto}://${host}`;
+  const host = (req.headers.host || `localhost:${CONFIG.webPort}`).split(',')[0].trim();
+  const fromReq = `${proto}://${host}`.replace(/\/$/, '');
+  if (/localhost|127\.0\.0\.1/i.test(host)) return fromReq;
+  if (CONFIG.publicBaseUrl) return String(CONFIG.publicBaseUrl).replace(/\/$/, '');
+  return fromReq;
+}
+
+function paysafeError(data) {
+  const e = data && data.error;
+  if (!e) return (data && data.status) ? String(data.status) : 'Paysafe hat die Zahlung nicht gestartet.';
+  const extra = Array.isArray(e.details)
+    ? e.details.map((d) => d.message || d.field || d).filter(Boolean).join(' ')
+    : '';
+  return [e.message, e.code, extra].filter(Boolean).join(' — ') || 'Paysafe-Fehler.';
 }
 
 function paysafeRequest(method, pathName, body) {
@@ -419,6 +433,7 @@ function publicServer(s, user) {
       return u ? u.email || u.username : '?';
     }),
     running: !!(i && i.process && !i.process.killed),
+    canDelete: !!user && !s.locked && s.id !== 'main' && (user.role === 'admin' || s.ownerId === user.id),
   };
 }
 
@@ -474,6 +489,36 @@ function createGameServer(user, name, extra = {}) {
   DB.servers.push(rec);
   saveDB();
   return { ok: true, server: publicServer(rec, user) };
+}
+
+function isInsideServersRoot(dir) {
+  const root = path.resolve(SERVERS_ROOT).toLowerCase();
+  const abs = path.resolve(dir || '').toLowerCase();
+  return abs === root || abs.startsWith(root + path.sep) || abs.startsWith(root + '/') || abs.startsWith(root + '\\');
+}
+
+function deleteGameServer(user, id) {
+  const rec = DB.servers.find((s) => s.id === id);
+  if (!rec) return { ok: false, msg: 'Server nicht gefunden.' };
+  if (rec.id === 'main' || rec.locked) {
+    return { ok: false, msg: 'Diesen Server kannst du nicht löschen.' };
+  }
+  if (!user || (user.role !== 'admin' && rec.ownerId !== user.id)) {
+    return { ok: false, msg: 'Kein Zugriff.' };
+  }
+  const inst = INST.get(rec.id);
+  if (inst && inst.process && !inst.process.killed) {
+    try { inst.process.kill(); } catch { /* ignore */ }
+  }
+  INST.delete(rec.id);
+  if (rec.dir && isInsideServersRoot(rec.dir) && fs.existsSync(rec.dir)) {
+    try { fs.rmSync(rec.dir, { recursive: true, force: true }); } catch (e) {
+      return { ok: false, msg: 'Ordner nicht löschbar: ' + e.message };
+    }
+  }
+  DB.servers = DB.servers.filter((s) => s.id !== rec.id);
+  saveDB();
+  return { ok: true };
 }
 
 function assignByEmail(rec, email, actor) {
@@ -1241,6 +1286,15 @@ const server = http.createServer(async (req, res) => {
     return json(res, { ok: true });
   }
 
+  if (p === '/api/shop' && req.method === 'GET') {
+    return json(res, {
+      ok: true,
+      plans: shopPlans(),
+      paysafe: paysafeReady(),
+      env: CONFIG.paysafeEnv === 'live' ? 'live' : 'test',
+    });
+  }
+
   if (!isAuth(req)) return json(res, { ok: false, msg: 'Nicht eingeloggt.' }, 401);
   const sess = getSession(getToken(req));
   const user = DB.users.find((u) => u.id === sess.userId);
@@ -1254,9 +1308,6 @@ const server = http.createServer(async (req, res) => {
       balance: user?.balance || 0,
     });
   }
-  if (p === '/api/shop' && req.method === 'GET') {
-    return json(res, { ok: true, plans: shopPlans(), paysafe: paysafeReady() });
-  }
   if (p === '/api/shop/buy' && req.method === 'POST') {
     const b = await parseBody(req);
     if (b.pin || b.paysafePin || b.cardNumber || b.cvv || b.pan) {
@@ -1264,6 +1315,16 @@ const server = http.createServer(async (req, res) => {
     }
     const plan = shopPlans().find((x) => x.id === b.planId);
     if (!plan) return json(res, { ok: false, msg: 'Paket nicht gefunden.' }, 404);
+    if (user.role === 'admin' && b.instant) {
+      const made = createGameServer(user, plan.name, {
+        planId: plan.id,
+        ram: plan.ram,
+        players: plan.players,
+        days: plan.days,
+      });
+      if (!made.ok) return json(res, made, 400);
+      return json(res, { ok: true, instant: true, server: made.server });
+    }
     if (!paysafeReady()) {
       return json(res, { ok: false, msg: 'Paysafecard ist noch nicht eingerichtet. Der Host muss die API-Keys im Admin eintragen.' }, 503);
     }
@@ -1283,13 +1344,9 @@ const server = http.createServer(async (req, res) => {
       paymentType: 'PAYSAFECARD',
       amount: cents,
       currencyCode: 'EUR',
-      customerIp: String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1').split(',')[0].trim(),
-      profile: { email: user.email || '' },
-      PaysafeCard: {
-        consumerId,
-        minAgeRestriction: 16,
-        countryRestriction: 'DE',
-      },
+      customerIp: String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1').split(',')[0].trim().replace('::ffff:', ''),
+      profile: { firstName: user.username || 'Eye', lastName: 'Host', email: user.email || `${user.username || 'user'}@eyehost.local` },
+      paysafecard: { consumerId },
       merchantDescriptor: { dynamicDescriptor: 'EyeHost', phone: '00000000' },
       returnLinks: [
         { rel: 'on_completed', href: `${base}/pay/return?order=${orderId}&ok=1`, method: 'GET' },
@@ -1299,8 +1356,7 @@ const server = http.createServer(async (req, res) => {
     });
     const redirect = redirectFromHandle(handle.data);
     if (!redirect) {
-      const msg = (handle.data && handle.data.error && (handle.data.error.message || handle.data.error.code)) || 'Paysafe hat die Zahlung nicht gestartet.';
-      return json(res, { ok: false, msg: String(msg) }, 502);
+      return json(res, { ok: false, msg: paysafeError(handle.data) }, 502);
     }
     const order = {
       id: orderId,
@@ -1487,14 +1543,8 @@ const server = http.createServer(async (req, res) => {
   }
   if (p.startsWith('/api/servers/') && req.method === 'DELETE') {
     const id = p.split('/').pop();
-    const rec = DB.servers.find((s) => s.id === id);
-    if (!isOwner(user, rec)) return json(res, { ok: false, msg: 'Kein Zugriff.' }, 403);
-    if (rec.id === 'main' || rec.locked) {
-      return json(res, { ok: false, msg: 'Dieser Server bleibt und kann nicht gelöscht werden.' }, 400);
-    }
-    DB.servers = DB.servers.filter((s) => s.id !== id);
-    saveDB();
-    return json(res, { ok: true });
+    const out = deleteGameServer(user, id);
+    return json(res, out, out.ok ? 200 : (out.msg === 'Kein Zugriff.' ? 403 : 400));
   }
 
   const sid = req.headers['x-server-id'] || url.searchParams.get('server') || '';
