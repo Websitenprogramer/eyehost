@@ -1147,6 +1147,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (p === '/' || p === '/index.html') return serveWebsite(res, 'index.html');
+  if (p === '/me' || p === '/me.html') return serveWebsite(res, 'me.html');
   if (p === '/style.css' || p === '/app.js' || p === '/config.js') return serveWebsite(res, p.slice(1));
   if (p === '/panel' || p === '/app' || p === '/pay/return' || p === '/pay/ok' || p === '/pay/fail') {
     return serveFrontend(res);

@@ -46,8 +46,18 @@ body {
 .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
 .brand { font-weight: 800; letter-spacing: -.04em; font-size: 22px; }
 .brand em { color: var(--accent-h); font-style: normal; }
-nav { display: flex; gap: 16px; }
+nav { display: flex; gap: 16px; align-items: center; }
 nav a { color: var(--t2); text-decoration: none; font-weight: 600; }
+.nav-area {
+  background: #6d28d9; color: #fff !important; border-radius: 999px;
+  padding: 7px 12px; font-size: 13px;
+}
+.area-bar {
+  max-width: 1080px; margin: 0 auto 8px; padding: 14px 18px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  flex-wrap: wrap; background: #2e1065; border: 1px solid #5b21b6; border-radius: 16px;
+}
+.area-bar span { color: var(--t2); margin-left: 8px; font-size: 14px; }
 main { max-width: 1080px; margin: 0 auto; padding: 24px 24px 80px; }
 .hero { padding: 48px 0 28px; }
 .kicker { color: var(--accent-h); font-weight: 700; }

@@ -1,5 +1,6 @@
 const PUBLIC_API = String(window.EYEHOST_API || '').replace(/\/$/, '');
 const API = (!PUBLIC_API || location.host === new URL(PUBLIC_API).host) ? '' : PUBLIC_API;
+const PAGE = document.body.getAttribute('data-page') || 'shop';
 let token = localStorage.getItem('eh3') || '';
 let me = '';
 let role = '';
@@ -30,6 +31,7 @@ async function api(path, method, body, serverId) {
 
 function toast(msg) {
   const el = $('toast');
+  if (!el) return;
   el.textContent = msg;
   el.classList.add('on');
   setTimeout(() => el.classList.remove('on'), 2800);
@@ -39,7 +41,7 @@ function openAuth(mode) {
   authMode = mode;
   $('auth-title').textContent = mode === 'register' ? 'Registrieren' : 'Anmelden';
   $('auth-go').textContent = mode === 'register' ? 'Konto erstellen' : 'Anmelden';
-  $('au-mail').style.display = mode === 'register' ? '' : 'none';
+  if ($('au-mail')) $('au-mail').style.display = mode === 'register' ? '' : 'none';
   $('auth-err').textContent = '';
   $('auth-modal').classList.add('on');
 }
@@ -51,7 +53,7 @@ function closeAuth() {
 async function submitAuth() {
   const username = $('au-user').value.trim();
   const password = $('au-pass').value;
-  const email = $('au-mail').value.trim();
+  const email = $('au-mail') ? $('au-mail').value.trim() : '';
   const path = authMode === 'register' ? '/api/register' : '/api/login';
   const body = authMode === 'register' ? { username, password, email } : { username, password };
   const r = await api(path, 'POST', body);
@@ -64,6 +66,11 @@ async function submitAuth() {
   role = r.role || 'user';
   localStorage.setItem('eh3', token);
   closeAuth();
+  if (PAGE === 'shop') {
+    renderUser();
+    toast('Angemeldet. Öffne oben Mein Bereich.');
+    return;
+  }
   renderUser();
   loadServers();
   loadTickets();
@@ -77,24 +84,28 @@ function logout() {
   localStorage.removeItem('eh3');
   resetTicketChat();
   renderUser();
-  $('srv-list').innerHTML = '';
-  $('srv-hint').textContent = 'Melde dich oben rechts an, um deinen Server zu steuern.';
+  if (PAGE === 'me') {
+    if ($('srv-list')) $('srv-list').innerHTML = '';
+    if ($('srv-hint')) $('srv-hint').textContent = 'Bitte anmelden.';
+    openAuth('login');
+  }
 }
 
 function renderUser() {
   const loggedIn = !!token;
-  $('nav-tickets').hidden = !loggedIn;
-  $('tickets').hidden = !loggedIn;
+  if ($('nav-area')) $('nav-area').hidden = !loggedIn;
+  if ($('area-bar')) $('area-bar').hidden = !loggedIn;
   const box = $('authbox');
+  if (!box) return;
   if (!loggedIn) {
     box.innerHTML = `
       <button class="btn btn-n btn-sm" type="button" onclick="openAuth('login')">Anmelden</button>
-      <button class="btn btn-p btn-sm" type="button" onclick="openAuth('register')">Registrieren</button>`;
+      ${PAGE === 'shop' ? '<button class="btn btn-p btn-sm" type="button" onclick="openAuth(\'register\')">Registrieren</button>' : ''}`;
     return;
   }
   box.innerHTML = `
     <span class="who">${esc(me || 'Account')}</span>
-    <a class="btn btn-n btn-sm" href="${API || ''}/panel">Panel</a>
+    ${PAGE === 'shop' ? '<a class="btn btn-p btn-sm" href="me.html">Mein Bereich</a>' : `<a class="btn btn-n btn-sm" href="${API || ''}/panel">Volle Konsole</a>`}
     <button class="btn btn-n btn-sm" type="button" onclick="logout()">Abmelden</button>`;
 }
 
@@ -105,7 +116,7 @@ function esc(s) {
 }
 
 async function loadServers() {
-  if (!token) return;
+  if (!token || !$('srv-list')) return;
   const r = await api('/api/servers');
   if (!r.ok) {
     $('srv-hint').textContent = r.msg || 'Nicht eingeloggt.';
@@ -115,7 +126,7 @@ async function loadServers() {
   const list = r.servers || [];
   $('srv-hint').textContent = list.length
     ? 'Start, Stop und Restart direkt hier.'
-    : 'Noch kein Server. Kauf dir eins unten im Shop.';
+    : 'Noch kein Server. Kauf dir eins im Shop.';
   $('srv-list').innerHTML = list.map((s) => `
     <div class="card srv">
       <div class="srv-top">
@@ -186,8 +197,8 @@ function resetTicketChat() {
 }
 
 async function loadTickets() {
-  if (!token) {
-    resetTicketChat();
+  if (!token || !$('tk-list')) {
+    if (!token) resetTicketChat();
     return;
   }
   const r = await api('/api/tickets');
@@ -287,7 +298,6 @@ async function sendTicket() {
     $('tk-sub').value = '';
     $('tk-msg').value = '';
     openTicketId = r.ticket.id;
-    location.hash = 'tickets';
     await loadTickets();
   }
 }
@@ -295,6 +305,7 @@ async function sendTicket() {
 async function boot() {
   if (!token) {
     renderUser();
+    if (PAGE === 'me') openAuth('login');
     return;
   }
   const meR = await api('/api/me');
@@ -302,13 +313,16 @@ async function boot() {
     token = '';
     localStorage.removeItem('eh3');
     renderUser();
+    if (PAGE === 'me') openAuth('login');
     return;
   }
   me = meR.username;
   role = meR.role || 'user';
   renderUser();
-  loadServers();
-  loadTickets();
+  if (PAGE === 'me') {
+    loadServers();
+    loadTickets();
+  }
 }
 
 boot();
