@@ -3,105 +3,111 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Eye Host – Minecraft Server kaufen</title>
+  <title>Eye Host – Minecraft Server</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <header class="top">
-    <div class="brand">Eye<em>Host</em></div>
+    <a class="brand" href="#top">Eye<em>Host</em></a>
     <nav>
+      <a href="#servers">Meine Server</a>
       <a href="#shop">Shop</a>
-      <a href="#features">Features</a>
-      <a href="https://github.com/Websitenprogramer/eyehost">GitHub</a>
+      <a href="#tickets" id="nav-tickets" hidden>Tickets</a>
+      <a href="#pay">Paysafecard</a>
     </nav>
+    <div class="authbox" id="authbox">
+      <button class="btn btn-n btn-sm" type="button" onclick="openAuth('login')">Anmelden</button>
+      <button class="btn btn-p btn-sm" type="button" onclick="openAuth('register')">Registrieren</button>
+    </div>
   </header>
 
   <main>
-    <section class="hero">
+    <section class="hero" id="top">
       <p class="kicker">Minecraft Hosting · Deutschland</p>
       <h1>Dein Server.<br>Dein Panel.</h1>
-      <p class="lead">Server kaufen, starten, Plugins, Konsole und Support — alles in einer Website. Zahlung mit <span class="psc">paysafecard</span>.</p>
-      <div class="hero-actions">
-        <a class="btn btn-p" href="#shop">Server kaufen</a>
-        <a class="btn btn-n" href="#pay">So zahlt man</a>
+      <p class="lead">Anmelden, Server steuern, Pakete kaufen. Zahlung mit <span class="psc">paysafecard</span>.</p>
+    </section>
+
+    <section id="servers">
+      <h2>Meine Server</h2>
+      <p class="sub" id="srv-hint">Melde dich oben rechts an, um deinen Server zu steuern.</p>
+      <div class="srv-grid" id="srv-list"></div>
+    </section>
+
+    <section id="tickets" hidden>
+      <h2>Tickets</h2>
+      <p class="sub">Schreib dem Support. Geschlossene Tickets siehst du als Kunde nicht mehr.</p>
+      <div class="card" style="margin-top:14px">
+        <div class="srv-name">Neues Ticket</div>
+        <input class="inp" id="tk-sub" placeholder="Betreff"/>
+        <input class="inp" id="tk-msg" placeholder="Deine Nachricht"/>
+        <div class="row">
+          <button class="btn btn-p btn-sm" type="button" onclick="sendTicket()">Ticket öffnen</button>
+        </div>
+      </div>
+      <div class="tk-wrap">
+        <div class="tk-side">
+          <div class="tk-cap">Deine Tickets</div>
+          <div id="tk-list"></div>
+        </div>
+        <div class="tk-chat">
+          <div id="tk-head"><div class="note">Wähle links ein Ticket</div></div>
+          <div class="tk-msgs" id="tk-msgs"></div>
+          <div id="tk-reply">
+            <input class="inp" id="tk-reply-in" placeholder="Nachricht an den Support…" onkeydown="if(event.key==='Enter')replyTicket()"/>
+            <button class="btn btn-p btn-sm" type="button" onclick="replyTicket()">Senden</button>
+          </div>
+        </div>
       </div>
     </section>
 
     <section id="shop">
       <h2>Pakete</h2>
-      <p class="sub">Preis gilt für 30 Tage. Nach dem Kauf richtet der Host die Instanz ein.</p>
+      <p class="sub">30 Tage Laufzeit. Nach der Zahlung wird die Instanz eingerichtet.</p>
       <div class="grid">
         <article class="card">
           <h3>Starter</h3>
           <div class="price">4,99 €<span>/30 Tage</span></div>
-          <ul>
-            <li>2G RAM</li>
-            <li>1 vCore</li>
-            <li>15 GB NVMe</li>
-            <li>10 Slots</li>
-          </ul>
-          <button class="btn btn-p" type="button" onclick="buy('starter', 4.99)">Mit Paysafecard kaufen</button>
+          <ul><li>2G RAM</li><li>1 vCore</li><li>15 GB NVMe</li><li>10 Slots</li></ul>
+          <button class="btn btn-p" type="button" onclick="buy('starter')">Mit Paysafecard kaufen</button>
         </article>
         <article class="card on">
           <h3>Plus</h3>
           <div class="price">8,99 €<span>/30 Tage</span></div>
-          <ul>
-            <li>4G RAM</li>
-            <li>2 vCores</li>
-            <li>30 GB NVMe</li>
-            <li>20 Slots</li>
-          </ul>
-          <button class="btn btn-p" type="button" onclick="buy('plus', 8.99)">Mit Paysafecard kaufen</button>
+          <ul><li>4G RAM</li><li>2 vCores</li><li>30 GB NVMe</li><li>20 Slots</li></ul>
+          <button class="btn btn-p" type="button" onclick="buy('plus')">Mit Paysafecard kaufen</button>
         </article>
         <article class="card">
           <h3>Pro</h3>
           <div class="price">14,99 €<span>/30 Tage</span></div>
-          <ul>
-            <li>8G RAM</li>
-            <li>3 vCores</li>
-            <li>60 GB NVMe</li>
-            <li>40 Slots</li>
-          </ul>
-          <button class="btn btn-p" type="button" onclick="buy('pro', 14.99)">Mit Paysafecard kaufen</button>
+          <ul><li>8G RAM</li><li>3 vCores</li><li>60 GB NVMe</li><li>40 Slots</li></ul>
+          <button class="btn btn-p" type="button" onclick="buy('pro')">Mit Paysafecard kaufen</button>
         </article>
-      </div>
-    </section>
-
-    <section id="features">
-      <h2>Im Panel</h2>
-      <div class="feat">
-        <div><b>Konsole</b><p>Start, Stop, Restart, Commands.</p></div>
-        <div><b>Dateien</b><p>Plugins, Configs, Backups.</p></div>
-        <div><b>Tickets</b><p>Support-Chat mit dem Host.</p></div>
       </div>
     </section>
 
     <section id="pay">
       <h2>Paysafecard</h2>
-      <p class="sub">Die 16-stellige PIN wird <b>nicht</b> bei uns eingegeben. Du wirst zur offiziellen Paysafe-Seite weitergeleitet.</p>
-      <p class="note" id="pay-note">Damit Kaufen klappt, muss der Host die Paysafe-Keys im Panel eintragen und das Panel muss laufen (nicht GitHub).</p>
+      <p class="sub">Die PIN gibst du nur auf der offiziellen Paysafe-Seite ein — nicht bei uns.</p>
     </section>
   </main>
 
-  <div class="modal" id="modal">
+  <div class="modal" id="auth-modal">
     <div class="box">
-      <h3>Mit Paysafecard zahlen</h3>
-      <p id="modal-text"></p>
-      <p class="note">GitHub hostet nur die Website. Die Zahlung und dein Server laufen über das Eye-Host-Panel auf dem Host-PC.</p>
-      <p>Panel lokal: <a href="http://localhost:3000">http://localhost:3000</a></p>
-      <button class="btn btn-n" type="button" onclick="closeModal()">Schließen</button>
+      <h3 id="auth-title">Anmelden</h3>
+      <p class="note" id="auth-err"></p>
+      <input class="inp" id="au-user" placeholder="Benutzername oder E-Mail"/>
+      <input class="inp" id="au-mail" placeholder="E-Mail" style="display:none"/>
+      <input class="inp" id="au-pass" type="password" placeholder="Passwort"/>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-n" type="button" onclick="closeAuth()">Abbrechen</button>
+        <button class="btn btn-p" type="button" id="auth-go" onclick="submitAuth()">Anmelden</button>
+      </div>
     </div>
   </div>
 
-  <script>
-    function buy(id, price) {
-      document.getElementById('modal-text').textContent =
-        'Paket ' + id + ' · ' + price.toFixed(2).replace('.', ',') + ' €. Im Panel einloggen, Shop öffnen, Kaufen — dann Paysafecard auf der offiziellen Seite.';
-      document.getElementById('modal').classList.add('on');
-    }
-    function closeModal() {
-      document.getElementById('modal').classList.remove('on');
-    }
-  </script>
+  <div class="toast" id="toast"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

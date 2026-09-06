@@ -1116,6 +1116,23 @@ function serveFrontend(res) {
   res.end(fs.readFileSync(f));
 }
 
+function serveWebsite(res, rel) {
+  const name = path.basename(rel);
+  const root = path.resolve(ROOT, 'website');
+  const f = path.resolve(root, name);
+  if (!f.startsWith(root) || !fs.existsSync(f)) {
+    res.writeHead(404);
+    return res.end('Not found');
+  }
+  const type = name.endsWith('.css')
+    ? 'text/css; charset=utf-8'
+    : name.endsWith('.js')
+      ? 'text/javascript; charset=utf-8'
+      : 'text/html; charset=utf-8';
+  res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
+  res.end(fs.readFileSync(f));
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const p = url.pathname;
@@ -1123,13 +1140,15 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Server-Id',
+      'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Server-Id,ngrok-skip-browser-warning',
       'Access-Control-Allow-Methods': 'GET,POST,DELETE,PUT',
     });
     return res.end();
   }
 
-  if (p === '/' || p === '/index.html' || p === '/pay/return' || p === '/pay/ok' || p === '/pay/fail') {
+  if (p === '/' || p === '/index.html') return serveWebsite(res, 'index.html');
+  if (p === '/style.css' || p === '/app.js' || p === '/config.js') return serveWebsite(res, p.slice(1));
+  if (p === '/panel' || p === '/app' || p === '/pay/return' || p === '/pay/ok' || p === '/pay/fail') {
     return serveFrontend(res);
   }
   if (p === '/api/pay/webhook' && req.method === 'POST') {
@@ -1193,6 +1212,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, {
       'Set-Cookie': `token=${token}; Path=/; HttpOnly; SameSite=Lax`,
       'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
     });
     return res.end(JSON.stringify({
       ok: true, token, role: user.role, username: user.username, email: user.email, balance: user.balance || 0,
@@ -1207,6 +1227,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, {
       'Set-Cookie': `token=${token}; Path=/; HttpOnly; SameSite=Lax`,
       'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
     });
     return res.end(JSON.stringify({
       ok: true, token, role: user.role, username: user.username, email: user.email || '', balance: user.balance || 0,
