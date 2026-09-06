@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Eye Host – Minecraft Server kaufen</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
-  <link rel="stylesheet" href="style.css?v=4"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css?v=5"/>
 </head>
 <body data-page="shop">
   <header class="top">
     <a class="brand" href="index.html">Eye<em>Host</em></a>
     <nav>
-      <a href="#shop">Shop</a>
-      <a href="#pay">Paysafecard</a>
+      <a href="#shop">Pakete</a>
+      <a href="#pay">Zahlung</a>
       <a class="nav-area" id="nav-area" href="me.html" hidden>Mein Bereich</a>
     </nav>
     <div class="authbox" id="authbox">
@@ -23,47 +25,76 @@
 
   <div class="area-bar" id="area-bar" hidden>
     <div>
-      <b>Mein Bereich</b>
-      <span>Deine Server, das Panel und Tickets sind auf einer extra Seite.</span>
+      <b>Angemeldet</b>
+      <span>Dein Account gilt auch für Mein Bereich.</span>
     </div>
-    <a class="btn btn-p btn-sm" href="me.html">Bereich öffnen</a>
+    <a class="btn btn-p btn-sm" href="me.html">Zum Bereich</a>
   </div>
 
   <main>
     <section class="hero" id="top">
       <p class="kicker">Minecraft Hosting · Deutschland</p>
-      <h1>Dein Server.<br>Dein Panel.</h1>
-      <p class="lead">Paket kaufen oder anmelden. Danach öffnest du oben <b>Mein Bereich</b> — dort sind Server, Panel und Tickets.</p>
+      <h1>Server kaufen.<br>Sofort loslegen.</h1>
+      <p class="lead">Wähle ein Paket und zahle mit <span class="psc">paysafecard</span>. Nach dem Anmelden öffnest du oben <b>Mein Bereich</b>.</p>
+      <div class="hero-actions">
+        <a class="btn btn-p" href="#shop">Paket wählen</a>
+        <button class="btn btn-n" type="button" onclick="openAuth('login')">Anmelden</button>
+      </div>
+    </section>
+
+    <section class="feat">
+      <div><b>Standort DE</b><p>Niedrige Ping-Zeiten, Host in Deutschland.</p></div>
+      <div><b>Paysafecard</b><p>PIN nur auf der offiziellen Paysafe-Seite.</p></div>
+      <div><b>Support</b><p>Nach dem Login erreichst du uns im Bereich.</p></div>
     </section>
 
     <section id="shop">
       <h2>Pakete</h2>
-      <p class="sub">30 Tage Laufzeit. Nach der Zahlung wird die Instanz eingerichtet.</p>
+      <p class="sub">Preis für 30 Tage. Nach der Zahlung wird die Instanz eingerichtet.</p>
       <div class="grid">
         <article class="card">
           <h3>Starter</h3>
           <div class="price">4,99 €<span>/30 Tage</span></div>
-          <ul><li>2G RAM</li><li>1 vCore</li><li>15 GB NVMe</li><li>10 Slots</li></ul>
+          <ul>
+            <li>2G RAM</li>
+            <li>1 vCore</li>
+            <li>15 GB NVMe</li>
+            <li>10 Slots</li>
+          </ul>
           <button class="btn btn-p" type="button" onclick="buy('starter')">Mit Paysafecard kaufen</button>
         </article>
         <article class="card on">
+          <div class="badge">Beliebt</div>
           <h3>Plus</h3>
           <div class="price">8,99 €<span>/30 Tage</span></div>
-          <ul><li>4G RAM</li><li>2 vCores</li><li>30 GB NVMe</li><li>20 Slots</li></ul>
+          <ul>
+            <li>4G RAM</li>
+            <li>2 vCores</li>
+            <li>30 GB NVMe</li>
+            <li>20 Slots</li>
+          </ul>
           <button class="btn btn-p" type="button" onclick="buy('plus')">Mit Paysafecard kaufen</button>
         </article>
         <article class="card">
           <h3>Pro</h3>
           <div class="price">14,99 €<span>/30 Tage</span></div>
-          <ul><li>8G RAM</li><li>3 vCores</li><li>60 GB NVMe</li><li>40 Slots</li></ul>
+          <ul>
+            <li>8G RAM</li>
+            <li>3 vCores</li>
+            <li>60 GB NVMe</li>
+            <li>40 Slots</li>
+          </ul>
           <button class="btn btn-p" type="button" onclick="buy('pro')">Mit Paysafecard kaufen</button>
         </article>
       </div>
     </section>
 
     <section id="pay">
-      <h2>Paysafecard</h2>
-      <p class="sub">Die PIN gibst du nur auf der offiziellen Paysafe-Seite ein — nicht bei uns.</p>
+      <h2>Zahlung</h2>
+      <div class="paybox">
+        <span class="psc">paysafecard</span>
+        <p>Die 16-stellige PIN gibst du nur auf der offiziellen Paysafe-Seite ein. Bei uns wird keine PIN gespeichert.</p>
+      </div>
     </section>
   </main>
 
@@ -82,7 +113,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <script src="config.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script src="config.js?v=5"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

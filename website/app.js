@@ -65,10 +65,11 @@ async function submitAuth() {
   me = r.username;
   role = r.role || 'user';
   localStorage.setItem('eh3', token);
+  localStorage.setItem('eh3u', me);
   closeAuth();
   if (PAGE === 'shop') {
     renderUser();
-    toast('Angemeldet. Öffne oben Mein Bereich.');
+    toast('Angemeldet. Derselbe Login gilt für Mein Bereich.');
     return;
   }
   renderUser();
@@ -82,6 +83,7 @@ function logout() {
   me = '';
   role = '';
   localStorage.removeItem('eh3');
+  localStorage.removeItem('eh3u');
   resetTicketChat();
   renderUser();
   if (PAGE === 'me') {
@@ -105,8 +107,13 @@ function renderUser() {
   }
   box.innerHTML = `
     <span class="who">${esc(me || 'Account')}</span>
-    ${PAGE === 'shop' ? '<a class="btn btn-p btn-sm" href="me.html">Mein Bereich</a>' : `<a class="btn btn-n btn-sm" href="${API || ''}/panel">Volle Konsole</a>`}
+    ${PAGE === 'shop' ? '<a class="btn btn-p btn-sm" href="me.html">Mein Bereich</a>' : `<a class="btn btn-n btn-sm" href="${panelUrl()}">Volle Konsole</a>`}
     <button class="btn btn-n btn-sm" type="button" onclick="logout()">Abmelden</button>`;
+}
+
+function panelUrl() {
+  const base = (API || '') + '/panel';
+  return token ? base + '#eh3=' + encodeURIComponent(token) : base;
 }
 
 function esc(s) {
@@ -140,7 +147,7 @@ async function loadServers() {
         <button class="btn btn-p btn-sm" type="button" onclick="ctrl('${s.id}','start')">Start</button>
         <button class="btn btn-n btn-sm" type="button" onclick="ctrl('${s.id}','stop')">Stop</button>
         <button class="btn btn-n btn-sm" type="button" onclick="ctrl('${s.id}','restart')">Neustart</button>
-        <a class="btn btn-n btn-sm" href="${API || ''}/panel">Konsole</a>
+        <a class="btn btn-n btn-sm" href="${panelUrl()}">Konsole</a>
       </div>
     </div>`).join('');
 }
@@ -312,12 +319,14 @@ async function boot() {
   if (!meR.ok) {
     token = '';
     localStorage.removeItem('eh3');
+    localStorage.removeItem('eh3u');
     renderUser();
     if (PAGE === 'me') openAuth('login');
     return;
   }
   me = meR.username;
   role = meR.role || 'user';
+  localStorage.setItem('eh3u', me);
   renderUser();
   if (PAGE === 'me') {
     loadServers();

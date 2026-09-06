@@ -1,18 +1,18 @@
 :root {
   --bg: #07080d;
-  --s1: #10131c;
-  --s2: #171c28;
+  --s1: #0d1018;
+  --s2: #141925;
   --b1: #232a3d;
-  --text: #eef1f8;
-  --t2: #9aa3b8;
-  --accent: #7c3aed;
-  --accent-h: #c4b5fd;
+  --text: #f1f5f9;
+  --t2: #94a3b8;
+  --accent: #5b8cff;
+  --accent-h: #7aa3ff;
 }
 * { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: Inter, Segoe UI, sans-serif;
-  background: radial-gradient(900px 500px at 10% -10%, #3b0764 0%, transparent 50%), var(--bg);
+  background: radial-gradient(700px 420px at 50% -80px, rgba(79,127,255,.18), transparent 55%), var(--bg);
   color: var(--text);
 }
 .top {
@@ -49,14 +49,23 @@ body {
 nav { display: flex; gap: 16px; align-items: center; }
 nav a { color: var(--t2); text-decoration: none; font-weight: 600; }
 .nav-area {
-  background: #6d28d9; color: #fff !important; border-radius: 999px;
+  background: var(--accent); color: #fff !important; border-radius: 999px;
   padding: 7px 12px; font-size: 13px;
 }
 .area-bar {
   max-width: 1080px; margin: 0 auto 8px; padding: 14px 18px;
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  flex-wrap: wrap; background: #2e1065; border: 1px solid #5b21b6; border-radius: 16px;
+  flex-wrap: wrap; background: rgba(91,140,255,.12); border: 1px solid #33405a; border-radius: 16px;
 }
+.badge {
+  align-self: flex-start; background: rgba(91,140,255,.16); color: var(--accent-h);
+  font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 99px;
+}
+.paybox {
+  margin-top: 16px; background: var(--s1); border: 1px solid var(--b1);
+  border-radius: 18px; padding: 22px; color: var(--t2); max-width: 640px;
+}
+.paybox p { margin: 10px 0 0; }
 .area-bar span { color: var(--t2); margin-left: 8px; font-size: 14px; }
 main { max-width: 1080px; margin: 0 auto; padding: 24px 24px 80px; }
 .hero { padding: 48px 0 28px; }
@@ -68,7 +77,8 @@ h1 { font-size: clamp(36px, 6vw, 64px); letter-spacing: -.05em; line-height: 1.0
   border: 0; border-radius: 10px; padding: 12px 16px; font-weight: 700; cursor: pointer;
   font-family: inherit; text-decoration: none; display: inline-block;
 }
-.btn-p { background: #6d28d9; color: #fff; }
+.btn-p { background: var(--accent); color: #fff; }
+.btn-p:hover { background: var(--accent-h); }
 .btn-n { background: var(--s2); color: var(--text); border: 1px solid var(--b1); }
 .psc {
   display: inline-block; background: #0b0; color: #041; border-radius: 99px;
@@ -82,7 +92,7 @@ h2 { font-size: 28px; margin: 48px 0 8px; }
   background: var(--s1); border: 1px solid var(--b1); border-radius: 18px; padding: 22px;
   display: flex; flex-direction: column; gap: 10px;
 }
-.card.on { border-color: var(--accent); }
+.card.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .price { font-size: 32px; font-weight: 800; }
 .price span { font-size: 13px; color: var(--t2); font-weight: 600; }
 .card ul { padding-left: 18px; color: var(--t2); }
@@ -111,12 +121,12 @@ h2 { font-size: 28px; margin: 48px 0 8px; }
   color: inherit; font-family: inherit;
 }
 .tk-item:hover { background: var(--s2); }
-.tk-item.on { background: #2e1065; }
+.tk-item.on { background: rgba(91,140,255,.16); }
 #tk-head { padding: 12px 14px; border-bottom: 1px solid var(--b1); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tk-msgs { flex: 1; overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 240px; }
 .tk-b { max-width: 80%; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.45; }
 .tk-b.staff { align-self: flex-start; background: var(--s2); border: 1px solid var(--b1); }
-.tk-b.user { align-self: flex-end; background: #2e1065; border: 1px solid #5b21b6; }
+.tk-b.user { align-self: flex-end; background: rgba(91,140,255,.16); border: 1px solid #33405a; }
 .tk-b small { display: block; color: var(--t2); font-size: 10px; margin-bottom: 4px; }
 #tk-reply { display: none; padding: 12px; border-top: 1px solid var(--b1); gap: 8px; align-items: center; }
 #tk-reply.on { display: flex; }

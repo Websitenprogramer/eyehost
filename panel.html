@@ -779,6 +779,14 @@ body{background:
 <div class="toast" id="toast"><span id="t-msg"></span></div>
 
 <script>
+(function takeSharedToken() {
+  const q = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  const shared = q.get('eh3');
+  if (shared) {
+    localStorage.setItem('eh3', shared);
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+})();
 let token = localStorage.getItem('eh3') || '';
 let role = '';
 let meName = '';
