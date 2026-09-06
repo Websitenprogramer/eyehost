@@ -1,0 +1,31 @@
+# Eye Host
+
+Minecraft-Panel (Node): Konsole, Dateien, Plugins, Shop, Tickets, Server starten/stoppen.
+
+## Wichtig
+
+**GitHub speichert nur den Code.** Dort läuft das Panel **nicht** 24/7.
+
+Eye Host muss auf einem **richtigen Rechner** laufen, der immer an ist:
+
+- dein PC, oder
+- ein VPS (z. B. Hetzner, Contabo) mit Node, Java und den Minecraft-Ordnern
+
+GitHub Actions / GitHub Pages können das Panel nicht dauerhaft hosten und auch keine Paper-Server starten.
+
+## Lokal starten
+
+```
+node server.js
+```
+
+Dann: http://localhost:3000
+
+## Geheimnisse
+
+Nicht ins Repo legen:
+
+- `eyehost-data.json` (Accounts, Sessions)
+- `eyehost-settings.json` (Paysafe-Keys, Pfade)
+
+Die Dateien entstehen automatisch, wenn das Panel läuft.

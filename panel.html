@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Eye Host</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080d;--s1:#0d1018;--s2:#141925;--s3:#1c2333;
+  --b1:#232a3d;--b2:#33405a;
+  --accent:#5b8cff;--accent-h:#7aa3ff;--accent-dim:rgba(91,140,255,.14);
+  --green:#10b981;--green-dim:rgba(16,185,129,.1);
+  --red:#ef4444;--red-dim:rgba(239,68,68,.1);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,.1);
+  --purple:#8b5cf6;--purple-dim:rgba(139,92,246,.1);
+  --text:#f1f5f9;--t2:#94a3b8;--t3:#475569;
+  --r:8px;--rl:12px;--rxl:16px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
+
+/* ── LOGIN ── */
+#login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:200;background:var(--bg)}
+#login::before{content:'';position:absolute;inset:0;background:radial-gradient(600px at 50% -100px,rgba(79,127,255,.15),transparent);pointer-events:none}
+.lc{width:420px;background:var(--s1);border:1px solid var(--b1);border-radius:var(--rxl);padding:44px 40px;position:relative}
+.lc-logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.lc-icon{width:38px;height:38px;border-radius:9px;background:var(--accent);display:grid;place-items:center}
+.lc-icon svg{width:20px;height:20px;fill:#fff}
+.lc-name{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.lc-name em{color:var(--accent-h);font-style:normal}
+.lc-sub{color:var(--t2);font-size:13px;margin-bottom:32px;margin-top:2px}
+.lbl{display:block;font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.inp{width:100%;background:var(--bg);border:1px solid var(--b2);border-radius:var(--r);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;padding:11px 14px;outline:none;transition:border-color .2s;margin-bottom:12px}
+.inp:focus{border-color:var(--accent)}
+.lc-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:12px;cursor:pointer;transition:background .2s}
+.lc-btn:hover{background:var(--accent-h)}
+.lc-err{color:var(--red);font-size:12px;text-align:center;margin-top:10px;min-height:18px}
+
+/* ── SHELL ── */
+#app{display:none;height:100vh;flex-direction:row}
+
+/* ── SIDEBAR ── */
+.sb{width:232px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;height:100vh}
+.sb-logo{display:flex;align-items:center;gap:9px;padding:20px 16px;border-bottom:1px solid var(--b1)}
+.sb-logo-icon{width:30px;height:30px;border-radius:7px;background:var(--accent);display:grid;place-items:center;flex-shrink:0}
+.sb-logo-icon svg{width:16px;height:16px;fill:#fff}
+.sb-logo-name{font-size:16px;font-weight:700}
+.sb-logo-name em{color:var(--accent-h);font-style:normal}
+.sb-section{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;padding:16px 16px 5px}
+.sb-nav{flex:1;padding:8px;overflow-y:auto}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--r);color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .12s}
+.ni svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.ni:hover{background:var(--s2);color:var(--text)}
+.ni.on{background:var(--accent-dim);color:var(--accent-h);font-weight:600}
+.ni.on svg{opacity:1}
+.sb-footer{padding:10px;border-top:1px solid var(--b1)}
+.sb-server{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;margin-bottom:8px}
+.sb-srv-label{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.sb-srv-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.sb-srv-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.pill.on{background:var(--green-dim);color:var(--green)}
+.pill.off{background:var(--red-dim);color:var(--red)}
+.pdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.pdot.pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sb-logout{display:flex;align-items:center;gap:7px;width:100%;padding:8px 10px;border-radius:var(--r);background:none;border:1px solid var(--b1);color:var(--t2);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;transition:all .15s}
+.sb-logout:hover{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+
+/* ── CONTENT ── */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--b1);background:var(--s1);flex-shrink:0}
+.tb-title{font-size:16px;font-weight:700}
+.tb-sub{font-size:12px;color:var(--t2);margin-top:1px}
+.tb-actions{display:flex;gap:8px;align-items:center}
+.pages{flex:1;overflow:hidden}
+.page{display:none;height:100%;overflow-y:auto;padding:20px 24px}
+.page.on{display:block}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .12s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn svg{width:14px;height:14px;flex-shrink:0}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent-h)}
+.btn-g{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.2)}.btn-g:hover{background:rgba(16,185,129,.18)}
+.btn-r{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.2)}.btn-r:hover{background:rgba(239,68,68,.18)}
+.btn-n{background:var(--s2);color:var(--t2);border:1px solid var(--b1)}.btn-n:hover{color:var(--text)}
+.btn-sm{padding:6px 11px;font-size:12px}
+.btn-sm svg{width:12px;height:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ── CARDS ── */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:18px}
+.card-title{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.sc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:16px 18px}
+.sc-lbl{font-size:11px;color:var(--t2);font-weight:500;margin-bottom:8px}
+.sc-val{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:-.5px}
+.sc-val.g{color:var(--green)}.sc-val.r{color:var(--red)}.sc-val.b{color:var(--accent-h)}.sc-val.a{color:var(--amber)}.sc-val.p{color:var(--purple)}
+.sc-badge{display:inline-block;margin-top:5px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px}
+.sc-badge.g{background:var(--green-dim);color:var(--green)}
+.sc-badge.r{background:var(--red-dim);color:var(--red)}
+.sc-badge.b{background:var(--accent-dim);color:var(--accent-h)}
+.sc-badge.a{background:var(--amber-dim);color:var(--amber)}
+
+/* ── IP BOX ── */
+.ip-box{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.ip-label{font-size:11px;color:var(--t2);font-weight:600;margin-bottom:2px}
+.ip-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:var(--accent-h)}
+
+/* ── CONSOLE ── */
+.con{background:#05080f;border:1px solid var(--b1);border-radius:var(--rl);height:360px;overflow-y:auto;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.8}
+.log{color:var(--t3)}
+.log.info{color:#60a5fa}.log.warn{color:var(--amber)}.log.error{color:var(--red)}.log.ok{color:var(--green)}.log.cmd{color:var(--purple)}
+.cmdbar{display:flex;gap:8px;margin-top:10px;align-items:center}
+.cmd-prompt{color:var(--accent-h);font-family:'JetBrains Mono',monospace;font-size:13px;flex-shrink:0}
+.cmdin{flex:1;background:#05080f;border:1px solid var(--b1);border-radius:var(--r);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:9px 12px;outline:none;transition:border-color .2s}
+.cmdin:focus{border-color:var(--accent)}
+.cmdin::placeholder{color:var(--t3)}
+
+/* ── FILES ── */
+.bc{display:flex;align-items:center;gap:3px;margin-bottom:14px;flex-wrap:wrap}
+.bc-item{font-size:12px;color:var(--t2);cursor:pointer;padding:3px 6px;border-radius:5px;transition:all .12s}
+.bc-item:hover{color:var(--text);background:var(--s2)}
+.bc-sep{color:var(--t3);font-size:12px}
+.ftbl{width:100%;border-collapse:collapse}
+.ftbl th{text-align:left;padding:7px 12px;font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--b1)}
+.ftbl td{padding:9px 12px;border-bottom:1px solid rgba(33,40,58,.5);font-size:13px;vertical-align:middle}
+.ftbl tr:hover td{background:var(--s2)}
+.ftbl tr:last-child td{border-bottom:none}
+.fn{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);transition:color .12s}
+.fn:hover{color:var(--accent-h)}
+.fn svg{width:15px;height:15px;flex-shrink:0;color:var(--t3)}
+.fn.dir svg{color:var(--amber)}
+.fsize{color:var(--t3);font-family:'JetBrains Mono',monospace;font-size:10px}
+.fdate{color:var(--t3);font-size:11px}
+.edwrap{display:none}
+.ed-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ed-path{flex:1;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-ta{width:100%;background:#05080f;border:1px solid var(--b1);border-radius:var(--rl);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:14px;resize:vertical;min-height:440px;outline:none;line-height:1.7;transition:border-color .2s}
+.ed-ta:focus{border-color:var(--accent)}
+
+/* ── PLUGINS ── */
+.plug-bar{display:flex;gap:8px;margin-bottom:18px}
+.plug-in{flex:1;background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;padding:10px 14px;outline:none;transition:border-color .2s}
+.plug-in:focus{border-color:var(--accent)}
+.plug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.pcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:16px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s}
+.pcard:hover{border-color:var(--b2)}
+.pcard-top{display:flex;gap:12px;align-items:flex-start}
+.pcard-icon{width:56px;height:56px;border-radius:10px;background:var(--s2);object-fit:cover;flex-shrink:0;border:1px solid var(--b1)}
+.pcard-icon.miss{display:grid;place-items:center;color:var(--t3);font-size:20px}
+.pcard-name{font-size:14px;font-weight:700}
+.pcard-tag{font-size:12px;color:var(--t2);line-height:1.5}
+.pcard-meta{display:flex;gap:10px}
+.pmeta{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:3px}
+.pmeta svg{width:12px;height:12px}
+.pspinner{width:13px;height:13px;border:2px solid var(--b2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── SETTINGS ── */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.field input,.field select{width:100%;background:var(--bg);border:1px solid var(--b2);border-radius:var(--r);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field select option{background:var(--s2)}
+.quickbtns{display:flex;flex-wrap:wrap;gap:7px}
+
+/* ── USERS ── */
+.user-table{width:100%;border-collapse:collapse}
+.user-table th{text-align:left;padding:7px 14px;font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--b1)}
+.user-table td{padding:11px 14px;border-bottom:1px solid rgba(33,40,58,.5);font-size:13px;vertical-align:middle}
+.user-table tr:last-child td{border-bottom:none}
+.role-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px}
+.role-badge.admin{background:var(--purple-dim);color:var(--purple)}
+.role-badge.user{background:var(--s2);color:var(--t2)}
+.add-user-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:18px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:10px 16px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:7px;transform:translateY(70px);opacity:0;transition:transform .3s cubic-bezier(.34,1.4,.64,1),opacity .3s;z-index:9999;pointer-events:none;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(16,185,129,.3);color:var(--green)}
+.toast.err{border-color:rgba(239,68,68,.3);color:var(--red)}
+.toast.info{border-color:rgba(79,127,255,.3);color:var(--accent-h)}
+.sep{height:1px;background:var(--b1);margin:14px 0}
+.prog{height:6px;background:var(--bg);border-radius:99px;overflow:hidden;margin-top:4px}
+.prog>span{display:block;height:100%;background:var(--accent);border-radius:99px}
+.prog.done>span{background:var(--green)}
+.modtbl{width:100%;border-collapse:collapse}
+.modtbl th{text-align:left;padding:7px 12px;font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--b1)}
+.modtbl td{padding:10px 12px;border-bottom:1px solid rgba(33,40,58,.5);font-size:13px;vertical-align:top}
+.modtbl tr:hover td{background:var(--s2)}
+.rank-chip{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--purple-dim);color:var(--purple);margin-left:6px}
+#home{display:none;height:100vh;overflow:auto;background:transparent}
+.home-top{position:sticky;top:0;z-index:20;backdrop-filter:blur(16px);background:rgba(7,8,13,.72);border-bottom:1px solid var(--b1)}
+.home-top-in{max-width:1180px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.home-nav{display:flex;gap:4px;background:rgba(20,25,37,.7);border:1px solid var(--b1);border-radius:99px;padding:4px}
+.home-wrap{max-width:1180px;margin:0 auto;padding:28px 28px 64px}
+.home-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.home-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+.home-tabs{display:flex;gap:6px;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:4px;margin-bottom:22px;width:fit-content;flex-wrap:wrap}
+.htab{background:none;border:none;color:var(--t2);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border-radius:6px;cursor:pointer}
+.htab:hover{color:var(--text)}
+.htab.on{background:var(--s2);color:var(--text)}
+.hpanel{display:none}
+.hpanel.on{display:block}
+.srv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:14px}
+.srv-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:18px;display:flex;flex-direction:column;gap:10px}
+.srv-card:hover{border-color:var(--b2)}
+.empty{color:var(--t2);background:var(--s1);border:1px dashed var(--b1);border-radius:var(--rl);padding:28px;text-align:center;line-height:1.6}
+.lc-switch{background:none;border:none;color:var(--accent-h);font-size:12px;cursor:pointer;margin-top:12px;width:100%;text-align:center}
+.app-back{display:flex;align-items:center;gap:14px;padding:12px 24px;border-bottom:1px solid var(--b1);background:var(--s2);flex-shrink:0}
+.wallet{background:var(--s2);color:var(--text);border:1px solid var(--b1);border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700}
+.shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}
+@media(max-width:900px){.shop-grid,.home-kpis{grid-template-columns:1fr}}
+.plan-card{background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px;min-height:360px}
+.plan-card .price{font-size:32px;font-weight:800;color:var(--text);letter-spacing:-.04em}
+.plan-card .price span{font-size:13px;color:var(--t2);font-weight:600;margin-left:4px}
+.spec{display:flex;justify-content:space-between;font-size:12px;color:var(--t2);padding:7px 0;border-bottom:1px solid rgba(35,42,61,.7)}
+.spec b{color:var(--text);font-weight:600}
+.modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px}
+.modal.on{display:flex}
+.modal-box{width:min(720px,100%);background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:26px;animation:pop .35s cubic-bezier(.22,1,.36,1);max-height:90vh;overflow:auto}
+.pay-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.pay-opt{border:1px solid var(--b1);background:var(--s2);border-radius:10px;padding:12px;cursor:pointer;color:var(--t2);font-weight:600;text-align:left}
+.pay-opt.on{border-color:var(--accent);color:var(--text);background:var(--accent-dim)}
+.tk-wrap{display:grid;grid-template-columns:320px 1fr;gap:14px;margin-top:16px;min-height:520px}
+@media(max-width:800px){.tk-wrap{grid-template-columns:1fr}}
+.tk-side,.tk-chat{background:var(--s1);border:1px solid var(--b1);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+.tk-item{padding:12px 14px;border-bottom:1px solid var(--b1);cursor:pointer;text-align:left;width:100%;background:none;border-left:none;border-right:none;border-top:none;color:inherit;font-family:inherit}
+.tk-item:hover{background:var(--s2)}
+.tk-item.on{background:var(--accent-dim)}
+.tk-msgs{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:280px}
+.tk-b{max-width:80%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.45}
+.tk-b.user{align-self:flex-end;background:var(--accent-dim);border:1px solid rgba(91,140,255,.25)}
+.tk-b.staff{align-self:flex-start;background:var(--s2);border:1px solid var(--b1)}
+.tk-b small{display:block;color:var(--t3);font-size:10px;margin-bottom:4px}
+.srv-card{min-height:170px;border-radius:16px;padding:20px}
+.admin-box{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:18px;margin-bottom:14px}
+.ni-back{background:var(--accent-dim)!important;color:var(--accent-h)!important;font-weight:700;margin-bottom:8px}
+
+/* ── LOOK ── */
+body{background:
+  radial-gradient(900px 500px at 10% -10%,rgba(91,140,255,.18),transparent 55%),
+  radial-gradient(700px 420px at 110% 10%,rgba(168,85,247,.12),transparent 50%),
+  var(--bg)}
+#login{background:transparent}
+#login::before{background:
+  radial-gradient(700px 380px at 50% -80px,rgba(91,140,255,.28),transparent 60%),
+  radial-gradient(420px 280px at 80% 90%,rgba(168,85,247,.16),transparent 55%)}
+.fx-orb{position:absolute;border-radius:50%;filter:blur(40px);pointer-events:none;animation:drift 12s ease-in-out infinite alternate}
+.fx-orb.a{width:220px;height:220px;background:rgba(91,140,255,.35);top:-40px;left:-50px}
+.fx-orb.b{width:180px;height:180px;background:rgba(168,85,247,.28);bottom:-50px;right:-30px;animation-delay:-4s}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(24px,-18px) scale(1.08)}}
+.lc{backdrop-filter:blur(18px);background:rgba(13,16,24,.78);box-shadow:0 30px 80px rgba(0,0,0,.45);animation:pop .55s cubic-bezier(.22,1,.36,1)}
+@keyframes pop{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+.lc-icon{box-shadow:0 0 0 6px rgba(91,140,255,.15);animation:pulse-glow 2.8s ease-in-out infinite}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 0 6px rgba(91,140,255,.12)}50%{box-shadow:0 0 28px 8px rgba(91,140,255,.28)}}
+.lc-btn{transition:transform .15s,background .2s,box-shadow .2s}
+.lc-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(91,140,255,.35)}
+.home-wrap{animation:pop .45s cubic-bezier(.22,1,.36,1)}
+.hpanel.on{animation:rise .35s ease}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.srv-card,.plan-card,.admin-box,.card,.sc,.ip-box{
+  transition:transform .2s ease,border-color .2s,box-shadow .2s;
+  background:linear-gradient(180deg,rgba(255,255,255,.02),transparent),var(--s1)
+}
+.srv-card:hover,.plan-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(91,140,255,.45);
+  box-shadow:0 16px 40px rgba(0,0,0,.28),0 0 0 1px rgba(91,140,255,.12)
+}
+.plan-card.hot{border-color:rgba(168,85,247,.45);box-shadow:0 0 32px rgba(168,85,247,.18)}
+.psc{display:inline-flex;align-items:center;gap:6px;background:#111;color:#c6f31a;border:1px solid #2a2a2a;border-radius:99px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.04em}
+.hero-pay{background:linear-gradient(135deg,rgba(198,243,26,.08),rgba(91,140,255,.08));border:1px solid var(--b1);border-radius:18px;padding:16px 18px;margin-bottom:18px}
+.htab{transition:background .15s,color .15s,transform .15s}
+.htab.on{background:var(--accent-dim);color:var(--accent-h)}
+.btn{transition:transform .12s,background .15s,box-shadow .15s}
+.btn-p:hover{box-shadow:0 8px 20px rgba(91,140,255,.3)}
+.app-back{animation:rise .3s ease}
+.page.on{animation:rise .28s ease}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="fx-orb a"></div>
+  <div class="fx-orb b"></div>
+  <div class="lc">
+    <div class="lc-logo">
+      <div class="lc-icon"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>
+      <div class="lc-name">Eye<em>Host</em></div>
+    </div>
+    <div class="lc-sub" id="l-sub">Anmelden</div>
+    <div id="login-box">
+      <label class="lbl">Benutzername oder E-Mail</label>
+      <input class="inp" type="text" id="lu" placeholder="name oder mail@…" />
+      <label class="lbl">Passwort</label>
+      <input class="inp" type="password" id="lp" placeholder="••••••••" />
+      <button class="lc-btn" onclick="doLogin()">Anmelden</button>
+      <button class="lc-switch" onclick="showReg(true)">Noch kein Konto? Registrieren</button>
+    </div>
+    <div id="reg-box" style="display:none">
+      <label class="lbl">Benutzername</label>
+      <input class="inp" type="text" id="ru" placeholder="z.B. noah" />
+      <label class="lbl">E-Mail</label>
+      <input class="inp" type="email" id="re" placeholder="du@mail.de" />
+      <label class="lbl">Passwort</label>
+      <input class="inp" type="password" id="rp" placeholder="mind. 4 Zeichen" />
+      <button class="lc-btn" onclick="doRegister()">Konto erstellen</button>
+      <button class="lc-switch" onclick="showReg(false)">Schon ein Konto? Anmelden</button>
+    </div>
+    <div class="lc-err" id="lerr"></div>
+  </div>
+</div>
+
+<div id="home">
+  <div class="home-top">
+    <div class="home-top-in">
+      <div class="tb-title" style="font-size:18px">Eye<em style="color:var(--accent-h);font-style:normal">Host</em></div>
+      <div class="home-nav">
+        <button class="htab on" data-tab="servers" onclick="homeTab('servers',this)">Konsole</button>
+        <button class="htab" data-tab="shop" onclick="homeTab('shop',this)">Shop</button>
+        <button class="htab" data-tab="support" onclick="homeTab('support',this)">Support <span id="tk-badge" class="psc" style="display:none;margin-left:4px">0</span></button>
+        <button class="htab admin-only" data-tab="admin" onclick="homeTab('admin',this)">Admin</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="tb-sub" id="home-hello" style="margin:0">–</div>
+        <button class="btn btn-n btn-sm" onclick="doLogout()">Abmelden</button>
+      </div>
+    </div>
+  </div>
+  <div class="home-wrap">
+    <div class="hpanel on" id="htab-servers">
+      <div class="home-head">
+        <div>
+          <div class="tb-title" style="font-size:28px;letter-spacing:-.04em">Deine Instanzen</div>
+          <div class="tb-sub">Starten, Dateien, Plugins — wie bei einem echten Host.</div>
+        </div>
+        <button class="btn btn-p" onclick="homeTab('shop')">Server kaufen</button>
+      </div>
+      <div class="home-kpis">
+        <div class="sc"><div class="sc-lbl">Server</div><div class="sc-val b" id="kpi-n">0</div><div class="sc-badge b">auf deinem Account</div></div>
+        <div class="sc"><div class="sc-lbl">Online</div><div class="sc-val g" id="kpi-on">0</div><div class="sc-badge g">gerade aktiv</div></div>
+        <div class="sc"><div class="sc-lbl">Standort</div><div class="sc-val" style="font-size:18px">Deutschland</div><div class="sc-badge b">niedrige Latenz</div></div>
+      </div>
+      <div class="srv-grid" id="srv-list"></div>
+    </div>
+
+    <div class="hpanel" id="htab-shop">
+      <div class="home-head">
+        <div>
+          <div class="tb-title" style="font-size:28px;letter-spacing:-.04em">Minecraft Server</div>
+          <div class="tb-sub">Specs ansehen, dann mit Paysafecard bezahlen. PIN nur auf der offiziellen Seite.</div>
+        </div>
+      </div>
+      <div class="hero-pay">
+        <span class="psc">paysafecard</span>
+        <div class="tb-sub" style="margin-top:8px">Sichere Zahlung: du wirst zu Paysafe weitergeleitet. Wir speichern keine PIN, keine Kartennummer, kein Guthaben.</div>
+      </div>
+      <div class="shop-grid" id="shop-list"></div>
+    </div>
+
+    <div class="hpanel" id="htab-support">
+      <div class="home-head">
+        <div>
+          <div class="tb-title" style="font-size:28px;letter-spacing:-.04em">Support</div>
+          <div class="tb-sub">Tickets sehen, schreiben und mit dem Support chatten.</div>
+        </div>
+      </div>
+      <div class="admin-box">
+        <div class="tb-title" style="font-size:15px">Neues Ticket</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
+          <input class="inp" id="tk-sub" placeholder="Betreff" style="margin:0;width:200px"/>
+          <input class="inp" id="tk-msg" placeholder="Deine Nachricht" style="margin:0;flex:1;min-width:220px"/>
+          <button class="btn btn-p" onclick="sendTicket()">Ticket öffnen</button>
+        </div>
+      </div>
+      <div class="tk-wrap">
+        <div class="tk-side">
+          <div style="padding:12px 14px;border-bottom:1px solid var(--b1);font-weight:700;font-size:13px">Tickets</div>
+          <div id="tk-list" style="overflow:auto;flex:1"></div>
+        </div>
+        <div class="tk-chat">
+          <div id="tk-head" style="padding:12px 14px;border-bottom:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="tb-sub">Wähle links ein Ticket</div>
+          </div>
+          <div class="tk-msgs" id="tk-msgs"></div>
+          <div id="tk-reply" style="display:none;padding:12px;border-top:1px solid var(--b1);gap:8px;align-items:center">
+            <input class="inp" id="tk-reply-in" placeholder="Nachricht an den Support…" style="margin:0;flex:1" onkeydown="if(event.key==='Enter')replyTicket()"/>
+            <button class="btn btn-p" onclick="replyTicket()">Senden</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hpanel admin-only" id="htab-admin">
+      <div class="admin-box">
+        <div class="tb-title" style="font-size:15px">Server erstellen</div>
+        <div class="tb-sub">Nur für dich. Optional direkt an eine registrierte E-Mail geben.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
+          <input class="inp" id="new-srv" placeholder="Servername" style="margin:0;width:200px"/>
+          <input class="inp" id="new-srv-email" placeholder="E-Mail zum Vergeben (optional)" style="margin:0;width:260px"/>
+          <button class="btn btn-p" onclick="createServer()">Erstellen</button>
+        </div>
+      </div>
+      <div class="admin-box">
+        <div class="tb-title" style="font-size:15px">Offene Bestellungen</div>
+        <div class="tb-sub">Nach Zahlungseingang Instanz freischalten. Name kommt bei der Einrichtung.</div>
+        <div id="admin-orders" style="margin-top:12px;color:var(--t2);font-size:13px">Keine offenen Bestellungen.</div>
+      </div>
+      <div class="admin-box">
+        <div class="tb-title" style="font-size:15px">Kunden-Tickets</div>
+        <div class="tb-sub">Hier antwortest du den Leuten, die ein Ticket gemacht haben.</div>
+        <div class="tk-wrap">
+          <div class="tk-side">
+            <div style="padding:12px 14px;border-bottom:1px solid var(--b1);font-weight:700;font-size:13px">Tickets</div>
+            <div id="admin-tickets" style="overflow:auto;flex:1"></div>
+          </div>
+          <div class="tk-chat">
+            <div id="admin-tk-head" style="padding:12px 14px;border-bottom:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="tb-sub">Wähle links ein Ticket</div>
+            </div>
+            <div class="tk-msgs" id="admin-tk-msgs"></div>
+            <div id="admin-tk-reply" style="display:none;padding:12px;border-top:1px solid var(--b1);gap:8px;align-items:center">
+              <input class="inp" id="admin-tk-reply-in" placeholder="Antwort als Support…" style="margin:0;flex:1" onkeydown="if(event.key==='Enter')replyTicket()"/>
+              <button class="btn btn-p" onclick="replyTicket()">Senden</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sb">
+    <div class="sb-logo">
+      <div class="sb-logo-icon"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>
+      <div class="sb-logo-name">Eye<em>Host</em></div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-section">Server</div>
+      <button class="ni ni-back" onclick="showHome()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>← Zurück zu meinen Servern
+      </button>
+      <button class="ni on" onclick="go('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard
+      </button>
+      <button class="ni" onclick="go('console',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10l1.41-1.41L10 11.17l-1.41 1.41L6 10zm4.17 4H6v-1.5h4.17v1.5zM13 14.5h5V13h-5v1.5zm0-3h5V10h-5v1.5z"/></svg>Konsole
+      </button>
+      <button class="ni" onclick="go('files',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>Dateien
+      </button>
+      <div class="sb-section">Tools</div>
+      <button class="ni" onclick="go('plugins',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-2 .9-2 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7s2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>Plugins
+      </button>
+      <button class="ni" onclick="go('backups',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/></svg>Backups
+      </button>
+      <button class="ni" onclick="go('serverconf',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3 1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>Server-Config
+      </button>
+      <div class="sb-section admin-only">Admin</div>
+      <button class="ni admin-only" onclick="go('users',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Benutzer
+      </button>
+      <button class="ni admin-only" onclick="go('settings',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35C8.66 5.59 8.12 5.92 7.63 6.29L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.22-.07.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Einstellungen
+      </button>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-server">
+        <div class="sb-srv-label">Server</div>
+        <div class="sb-srv-row">
+          <div class="sb-srv-name" id="sb-name">Minecraft</div>
+          <div class="pill off" id="sb-pill"><div class="pdot" id="sb-dot"></div><span id="sb-txt">Offline</span></div>
+        </div>
+      </div>
+      <button class="sb-logout" onclick="doLogout()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        Abmelden (<span id="sb-user">–</span>)
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="app-back">
+      <button class="btn btn-n" onclick="showHome()">← Zurück zu meinen Servern</button>
+      <div style="flex:1">
+        <div class="tb-title" id="app-srv-title">Server</div>
+        <div class="tb-sub">Du kannst jederzeit zur Serverliste zurück</div>
+      </div>
+      
+    </div>
+    <div class="pages">
+
+      <!-- DASHBOARD -->
+      <div class="page on" id="page-dashboard">
+        <div class="topbar">
+          <div><div class="tb-title">Dashboard</div><div class="tb-sub">Server-Übersicht</div></div>
+          <div class="tb-actions">
+            <button class="btn btn-g" id="btn-start" onclick="startServer()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Starten</button>
+            <button class="btn btn-n" id="btn-restart" onclick="restartServer()" disabled><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>Neustart</button>
+            <button class="btn btn-r" id="btn-stop" onclick="stopServer()" disabled><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>Stoppen</button>
+          </div>
+        </div>
+        <div style="padding:20px 24px">
+          <div class="ip-box">
+            <div>
+              <div class="ip-label">Server-IP zum Verbinden</div>
+              <div class="ip-val" id="d-ip">lädt…</div>
+            </div>
+            <div style="text-align:right">
+              <div class="ip-label">Standard Port</div>
+              <div class="ip-val" id="d-port">25565</div>
+            </div>
+            <button class="btn btn-n btn-sm" onclick="copyIP()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>Kopieren</button>
+          </div>
+          <div class="stats">
+            <div class="sc"><div class="sc-lbl">Status</div><div class="sc-val r" id="d-status">Offline</div><div class="sc-badge r" id="d-badge">Gestoppt</div></div>
+            <div class="sc"><div class="sc-lbl">RAM</div><div class="sc-val b" id="d-ram">– MB</div><div class="sc-badge b" id="d-ram2">von – MB</div></div>
+            <div class="sc"><div class="sc-lbl">Spieler</div><div class="sc-val a" id="d-players">0</div><div class="sc-badge a" id="d-plist">–</div></div>
+            <div class="sc"><div class="sc-lbl">CPU</div><div class="sc-val p" id="d-cpu">–</div><div class="sc-badge b" id="d-up">Panel –</div></div>
+          </div>
+          <div class="card"><div class="card-title">Live-Konsole</div><div class="con" id="d-con" style="height:240px"></div></div>
+        </div>
+      </div>
+
+      <!-- KONSOLE -->
+      <div class="page" id="page-console">
+        <div class="topbar">
+          <div><div class="tb-title">Konsole</div><div class="tb-sub">Live Output & Befehle</div></div>
+          <button class="btn btn-n btn-sm admin-only" onclick="document.getElementById('main-con').innerHTML=''">Leeren</button>
+        </div>
+        <div style="padding:20px 24px">
+          <div class="card">
+            <div class="con" id="main-con" style="height:480px"></div>
+            <div class="cmdbar">
+              <span class="cmd-prompt">$</span>
+              <input class="cmdin" id="cmd-in" placeholder="Befehl eingeben…" onkeydown="if(event.key==='Enter')sendCmd()"/>
+              <button class="btn btn-p btn-sm admin-only" onclick="sendCmd()">Senden</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATEIEN -->
+      <div class="page" id="page-files">
+        <div class="topbar">
+          <div><div class="tb-title">Dateien</div><div class="tb-sub" id="f-sub">Server-Verzeichnis</div></div>
+          <div class="tb-actions admin-only">
+            <input type="file" id="f-up" multiple hidden onchange="uploadPicked(this.files, curPath)"/>
+            <button class="btn btn-p btn-sm" onclick="$('f-up').click()">Hochladen</button>
+          </div>
+        </div>
+        <div style="padding:20px 24px">
+          <div id="fbwrap" ondragover="event.preventDefault()" ondrop="onDropFiles(event)">
+            <div class="bc" id="bc"></div>
+            <div style="color:var(--t3);font-size:12px;margin-bottom:10px">Dateien oder Plugin-JARs hierher ziehen oder oben auf Hochladen klicken.</div>
+            <div class="card" style="padding:0;overflow:hidden">
+              <table class="ftbl"><thead><tr><th>Name</th><th>Größe</th><th>Geändert</th><th></th></tr></thead>
+              <tbody id="flist"></tbody></table>
+            </div>
+          </div>
+          <div class="edwrap" id="edwrap">
+            <div class="ed-hdr">
+              <button class="btn btn-n btn-sm" onclick="closeEd()">← Zurück</button>
+              <span class="ed-path" id="ed-path"></span>
+              <button class="btn btn-g btn-sm admin-only" onclick="saveFile()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>Speichern</button>
+            </div>
+            <textarea class="ed-ta" id="ed-ta" spellcheck="false"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLUGINS -->
+      <div class="page" id="page-backups">
+        <div class="topbar">
+          <div><div class="tb-title">Backups</div><div class="tb-sub">Welten sichern</div></div>
+          <button class="btn btn-p btn-sm admin-only" onclick="makeBackup()">Backup erstellen</button>
+        </div>
+        <div style="padding:20px 24px">
+          <div class="card" style="padding:0;overflow:hidden">
+            <table class="ftbl"><thead><tr><th>Datei</th><th>Größe</th><th>Datum</th><th></th></tr></thead>
+            <tbody id="bak-list"><tr><td colspan="4" style="color:var(--t2);padding:16px">Lädt…</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-plugins">
+        <div class="topbar">
+          <div><div class="tb-title">Plugins</div><div class="tb-sub">Suchen, durchstöbern und auf den Server installieren</div></div>
+          <div class="tb-actions admin-only">
+            <input type="file" id="plug-up" accept=".jar" multiple hidden onchange="uploadPicked(this.files, 'plugins')"/>
+            <button class="btn btn-n btn-sm" onclick="$('plug-up').click()">JAR hochladen</button>
+          </div>
+        </div>
+        <div style="padding:20px 24px">
+          <div class="card-title" style="margin-bottom:10px">Web-Store</div>
+          <div class="plug-bar">
+            <input class="plug-in" id="plug-q" placeholder="Alle Spigot-Plugins durchsuchen…" onkeydown="if(event.key==='Enter')searchPlugins(1)"/>
+            <button class="btn btn-p" onclick="searchPlugins(1)">Suchen</button>
+            <button class="btn btn-n" onclick="$('plug-q').value='';searchPlugins(1)">Beliebteste</button>
+          </div>
+          <div class="quickbtns" style="margin-bottom:14px">
+            <button class="btn btn-n btn-sm" onclick="quickPlug('LuckPerms')">LuckPerms</button>
+            <button class="btn btn-n btn-sm" onclick="quickPlug('EssentialsX')">EssentialsX</button>
+            <button class="btn btn-n btn-sm" onclick="quickPlug('WorldEdit')">WorldEdit</button>
+            <button class="btn btn-n btn-sm" onclick="quickPlug('WorldGuard')">WorldGuard</button>
+            <button class="btn btn-n btn-sm" onclick="quickPlug('Vault')">Vault</button>
+            <button class="btn btn-n btn-sm" onclick="quickPlug('PlaceholderAPI')">PlaceholderAPI</button>
+            <button class="btn btn-n btn-sm" onclick="quickPlug('ViaVersion')">ViaVersion</button>
+            <button class="btn btn-n btn-sm" onclick="quickPlug('CoreProtect')">CoreProtect</button>
+            <button class="btn btn-n btn-sm" onclick="quickPlug('Multiverse')">Multiverse</button>
+          </div>
+          <div id="plug-res"></div>
+          <div id="plug-pages" style="display:flex;gap:8px;margin-top:14px;align-items:center;margin-bottom:22px"></div>
+          <div class="card-title" style="margin-bottom:10px">Auf dem Server</div>
+          <div class="card" style="padding:0;overflow:hidden">
+            <table class="ftbl"><thead><tr><th>Installiert</th><th>Größe</th><th></th></tr></thead>
+            <tbody id="plug-installed"><tr><td colspan="3" style="color:var(--t2);padding:16px">Lädt…</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVER CONFIG -->
+      <div class="page" id="page-serverconf">
+        <div class="topbar"><div><div class="tb-title">Server-Config</div><div class="tb-sub">server.properties bearbeiten</div></div>
+          <button class="btn btn-p btn-sm admin-only" onclick="saveProps()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>Speichern & Neu starten nötig</button>
+        </div>
+        <div style="padding:20px 24px">
+          <div class="card">
+            <div class="card-title">Basis-Einstellungen</div>
+            <div class="set-grid">
+              <div class="field"><label>Server-Name (MOTD)</label><input type="text" id="prop-motd" placeholder="A Minecraft Server"/></div>
+              <div class="field"><label>Max. Spieler</label><input type="number" id="prop-maxplayers" placeholder="20"/></div>
+              <div class="field"><label>Spielmodus</label>
+                <select id="prop-gamemode">
+                  <option value="survival">Survival</option>
+                  <option value="creative">Creative</option>
+                  <option value="adventure">Adventure</option>
+                  <option value="spectator">Spectator</option>
+                </select>
+              </div>
+              <div class="field"><label>Schwierigkeit</label>
+                <select id="prop-difficulty">
+                  <option value="peaceful">Peaceful</option>
+                  <option value="easy">Easy</option>
+                  <option value="normal">Normal</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+              <div class="field"><label>PvP</label>
+                <select id="prop-pvp"><option value="true">An</option><option value="false">Aus</option></select>
+              </div>
+              <div class="field"><label>Online-Mode (Cracked aus)</label>
+                <select id="prop-online"><option value="true">An (Original)</option><option value="false">Aus (Cracked)</option></select>
+              </div>
+              <div class="field"><label>Whitelist</label>
+                <select id="prop-whitelist"><option value="false">Aus</option><option value="true">An</option></select>
+              </div>
+              <div class="field"><label>Server Port</label><input type="number" id="prop-port" placeholder="25565"/></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BENUTZER -->
+      <div class="page" id="page-users">
+        <div class="topbar"><div><div class="tb-title">Benutzer</div><div class="tb-sub">Accounts verwalten</div></div></div>
+        <div style="padding:20px 24px">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-title">Neuen Benutzer erstellen</div>
+            <div class="add-user-form" style="grid-template-columns:1fr 1fr 1fr 1fr auto">
+              <div class="field" style="margin:0"><label>Benutzername</label><input type="text" id="nu-name" placeholder="spieler123"/></div>
+              <div class="field" style="margin:0"><label>E-Mail</label><input type="email" id="nu-email" placeholder="mail@…"/></div>
+              <div class="field" style="margin:0"><label>Passwort</label><input type="password" id="nu-pass" placeholder="passwort"/></div>
+              <div class="field" style="margin:0"><label>Rolle</label>
+                <select id="nu-role"><option value="user">User</option><option value="admin">Admin</option></select>
+              </div>
+              <button class="btn btn-p" style="margin-top:17px" onclick="createUser()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Erstellen</button>
+            </div>
+          </div>
+          <div class="card" style="padding:0;overflow:hidden">
+            <table class="user-table">
+              <thead><tr><th>Benutzername</th><th>E-Mail</th><th>Rolle</th><th>Erstellt</th><th>Passwort ändern</th><th></th></tr></thead>
+              <tbody id="user-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- EINSTELLUNGEN -->
+      <div class="page" id="page-settings">
+        <div class="topbar"><div><div class="tb-title">Einstellungen</div><div class="tb-sub">Schnellbefehle & Aktionen</div></div></div>
+        <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+          <div class="card admin-only">
+            <div class="card-title">Panel / Java</div>
+            <div class="set-grid">
+              <div class="field"><label>Minecraft-Ordner</label><input type="text" id="set-dir"/></div>
+              <div class="field"><label>JAR (auto oder Dateiname)</label><input type="text" id="set-jar" placeholder="auto"/></div>
+              <div class="field"><label>Java-Args</label><input type="text" id="set-args" placeholder="-Xmx2G -Xms1G"/></div>
+              <div class="field"><label>Java.exe Pfad</label><input type="text" id="set-java" placeholder="auto"/></div>
+            </div>
+            <div class="card-title" style="margin-top:18px">Paysafecard (echte Zahlung)</div>
+            <div class="tb-sub" style="margin-bottom:10px">Keys nur vom Paysafe Business Portal. PIN wird nie im Panel eingegeben.</div>
+            <div class="set-grid">
+              <div class="field"><label>Öffentliche Panel-URL</label><input type="text" id="set-pub" placeholder="https://deine-domain.de"/></div>
+              <div class="field"><label>Umgebung</label>
+                <select id="set-psc-env"><option value="test">Test</option><option value="live">Live</option></select>
+              </div>
+              <div class="field"><label>API Username</label><input type="text" id="set-psc-user" autocomplete="off"/></div>
+              <div class="field"><label>API Key</label><input type="password" id="set-psc-key" placeholder="leer = unverändert" autocomplete="off"/></div>
+              <div class="field"><label>Account ID</label><input type="text" id="set-psc-acc" autocomplete="off"/></div>
+            </div>
+            <button class="btn btn-p btn-sm" onclick="savePanelSettings()">Einstellungen speichern</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Schnellbefehle</div>
+            <div class="quickbtns">
+              <button class="btn btn-n btn-sm" onclick="qc('list')">Spielerliste</button>
+              <button class="btn btn-n btn-sm" onclick="qc('save-all')">Welt speichern</button>
+              <button class="btn btn-n btn-sm" onclick="qc('time set day')">Tag</button>
+              <button class="btn btn-n btn-sm" onclick="qc('time set night')">Nacht</button>
+              <button class="btn btn-n btn-sm" onclick="qc('weather clear')">Wetter klar</button>
+              <button class="btn btn-n btn-sm" onclick="qc('weather rain')">Wetter Regen</button>
+              <button class="btn btn-n btn-sm" onclick="qc('difficulty peaceful')">Peaceful</button>
+              <button class="btn btn-n btn-sm" onclick="qc('difficulty normal')">Normal</button>
+              <button class="btn btn-n btn-sm" onclick="qc('difficulty hard')">Hard</button>
+              <button class="btn btn-n btn-sm" onclick="qc('gamerule keepInventory true')">Keep Inventory</button>
+              <button class="btn btn-n btn-sm" onclick="qc('gamerule doMobSpawning false')">Mobs aus</button>
+              <button class="btn btn-n btn-sm" onclick="qc('gamerule doDaylightCycle false')">Tageszyklus aus</button>
+            </div>
+          </div>
+          <div class="set-grid">
+            <div class="card">
+              <div class="card-title">Broadcast</div>
+              <div class="field"><label>Nachricht</label><input type="text" id="say-in" placeholder="Hallo Server!"/></div>
+              <button class="btn btn-n btn-sm" onclick="qc('say '+document.getElementById('say-in').value)">Senden</button>
+            </div>
+            <div class="card">
+              <div class="card-title">Spieler</div>
+              <div class="field"><label>Spielername</label><input type="text" id="pl-in" placeholder="Steve"/></div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-n btn-sm" onclick="qc('kick '+document.getElementById('pl-in').value)">Kick</button>
+                <button class="btn btn-r btn-sm" onclick="qc('ban '+document.getElementById('pl-in').value)">Ban</button>
+                <button class="btn btn-g btn-sm" onclick="qc('op '+document.getElementById('pl-in').value)">OP</button>
+                <button class="btn btn-n btn-sm" onclick="qc('deop '+document.getElementById('pl-in').value)">deOP</button>
+                <button class="btn btn-n btn-sm" onclick="qc('whitelist add '+document.getElementById('pl-in').value)">Whitelist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+<div class="toast" id="toast"><span id="t-msg"></span></div>
+
+<script>
+let token = localStorage.getItem('eh3') || '';
+let role = '';
+let meName = '';
+let meEmail = '';
+let serverId = localStorage.getItem('eh3s') || '';
+let cSince = 0;
+let curPath = '';
+let curFile = '';
+
+function showReg(on) {
+  $('login-box').style.display = on ? 'none' : '';
+  $('reg-box').style.display = on ? '' : 'none';
+  $('l-sub').textContent = on ? 'Konto erstellen' : 'Anmelden';
+  $('lerr').textContent = '';
+}
+
+function money(n) {
+  return (Number(n) || 0).toFixed(2).replace('.', ',') + ' €';
+}
+
+function afterAuth(r) {
+  token = r.token; role = r.role; meName = r.username; meEmail = r.email || '';
+  localStorage.setItem('eh3', token);
+  $('login').style.display = 'none';
+  $('sb-user').textContent = r.username;
+  applyRole();
+  showHome();
+  startTicketWatch();
+}
+
+async function doLogin() {
+  const r = await api('/api/login','POST',{username:$('lu').value.trim(),password:$('lp').value});
+  if (r.ok) afterAuth(r);
+  else $('lerr').textContent = r.msg || 'Fehler';
+}
+async function doRegister() {
+  const r = await api('/api/register','POST',{
+    username:$('ru').value.trim(),
+    email:$('re').value.trim(),
+    password:$('rp').value
+  });
+  if (r.ok) afterAuth(r);
+  else $('lerr').textContent = r.msg || 'Fehler';
+}
+$('lp').onkeydown = e => { if(e.key==='Enter') doLogin(); };
+$('rp').onkeydown = e => { if(e.key==='Enter') doRegister(); };
+
+async function doLogout() {
+  await api('/api/logout','POST');
+  localStorage.removeItem('eh3');
+  localStorage.removeItem('eh3s');
+  location.reload();
+}
+
+async function tryAutoLogin() {
+  if (!token) return;
+  const r = await api('/api/me');
+  if (r.ok) {
+    role = r.role; meName = r.username; meEmail = r.email || '';
+    $('sb-user').textContent = r.username;
+    $('login').style.display = 'none';
+    applyRole();
+    showHome();
+    startTicketWatch();
+  } else {
+    localStorage.removeItem('eh3');
+  }
+}
+
+function applyRole() {
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = role === 'admin' ? '' : 'none';
+  });
+}
+
+let currentHomeTab = 'servers';
+function homeTab(name, btn) {
+  currentHomeTab = name;
+  document.querySelectorAll('.htab').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.hpanel').forEach(p => p.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  else {
+    const t = document.querySelector('.htab[data-tab="'+name+'"]');
+    if (t) t.classList.add('on');
+  }
+  const panel = $('htab-'+name);
+  if (panel) panel.classList.add('on');
+  if (name === 'support' || name === 'admin') loadTickets();
+}
+
+let tkWatch = null;
+function startTicketWatch() {
+  if (tkWatch) clearInterval(tkWatch);
+  loadTickets();
+  tkWatch = setInterval(() => { if (token) loadTickets(); }, 4000);
+}
+
+tryAutoLogin().then(() => handlePayReturn());
+
+async function handlePayReturn() {
+  const u = new URL(location.href);
+  if (!u.pathname.startsWith('/pay/')) return;
+  const orderId = u.searchParams.get('order');
+  history.replaceState({}, '', '/');
+  if (!orderId || !token) return;
+  const r = await api('/api/pay/finish','POST',{orderId});
+  toast(r.ok ? 'Zahlung bestätigt. Server wird eingerichtet.' : (r.msg || 'Zahlung noch offen'), r.ok ? 'ok' : 'err');
+  showHome();
+}
+
+// ── Core ─────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: {'Content-Type':'application/json','Authorization':token}, credentials:'include' };
+  if (serverId) opts.headers['X-Server-Id'] = serverId;
+  if (body) opts.body = JSON.stringify(body);
+  try { return await (await fetch(path, opts)).json(); }
+  catch(e) { return { ok:false, msg:e.message }; }
+}
+
+function expText(s) {
+  if (!s.expiresAt) return '';
+  const d = new Date(s.expiresAt);
+  return ' · bis ' + d.toLocaleDateString('de-DE');
+}
+async function showHome() {
+  $('app').style.display = 'none';
+  $('home').style.display = 'block';
+  applyRole();
+  if (currentHomeTab === 'admin' && role !== 'admin') currentHomeTab = 'servers';
+  homeTab(currentHomeTab);
+  if ($('home-hello')) $('home-hello').textContent = meName || 'Account';
+  const [r, shop, tix, ords] = await Promise.all([
+    api('/api/servers'),
+    api('/api/shop'),
+    api('/api/tickets'),
+    api('/api/orders'),
+  ]);
+  shopCache = shop.ok ? shop.plans : [];
+  renderShop(shopCache);
+  renderTickets(tix.ok ? tix.tickets : []);
+  renderOrders(ords.ok ? ords.orders : []);
+  const box = $('srv-list');
+  const list = r.ok ? r.servers : [];
+  if ($('kpi-n')) $('kpi-n').textContent = list.length;
+  if ($('kpi-on')) $('kpi-on').textContent = list.filter(s => s.running).length;
+  if (!r.ok) { box.innerHTML = `<div class="empty">${r.msg||'Fehler'}</div>`; return; }
+  if (!list.length) {
+    box.innerHTML = '<div class="empty">Noch keine Instanz.<br>Im Shop kaufst du einen Server — erst Specs, dann Bezahlen.</div>';
+    return;
+  }
+  box.innerHTML = list.map(s => {
+    const canAssign = role === 'admin' && !s.locked;
+    return `
+    <div class="srv-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="pcard-name" style="font-size:18px">${esc(s.name)}</div>
+          <div style="color:var(--t3);font-size:11px;margin-top:3px">Paper · ${esc(s.loc||'Deutschland')} · Port ${s.port}</div>
+        </div>
+        <div class="pill ${s.running?'on':'off'}"><div class="pdot ${s.running?'pulse':''}"></div>${s.running?'Online':'Offline'}</div>
+      </div>
+      <div style="color:var(--t2);font-size:12px;margin-top:8px">${s.ram?esc(s.ram)+' RAM':''}${s.plan?(' · Paket '+s.plan):''}${expText(s)}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto">
+        <button class="btn btn-p" onclick="openServer('${s.id}','${esc(s.name)}')">Konsole öffnen</button>
+        ${canAssign?`<button class="btn btn-n btn-sm" onclick="assignServer('${s.id}')">Per E-Mail vergeben</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+let shopCache = [];
+function planById(id) { return shopCache.find(p => p.id === id); }
+function specLines(p) {
+  return [
+    ['RAM', p.ram || '–'],
+    ['CPU', p.cpu || '–'],
+    ['SSD', p.disk || '–'],
+    ['Spieler', p.players != null ? p.players : '–'],
+    ['Backups', p.backups != null ? p.backups : '–'],
+    ['Standort', p.loc || 'Deutschland'],
+    ['Schutz', p.ddos ? 'DDoS inklusive' : 'Standard'],
+    ['Laufzeit', (p.days || 30) + ' Tage'],
+  ];
+}
+function renderShop(plans) {
+  const box = $('shop-list');
+  if (!box) return;
+  if (!plans.length) { box.innerHTML = '<div class="empty">Shop lädt nicht.</div>'; return; }
+  box.innerHTML = plans.map(p => `
+    <div class="plan-card ${p.id==='pro'?'hot':''}">
+      <div class="pcard-name" style="font-size:20px">${esc(p.name)}</div>
+      <div class="tb-sub">${esc(p.desc||'')}</div>
+      <div class="price">${money(p.price)}<span>/ 30 Tage</span></div>
+      ${specLines(p).slice(0,5).map(([k,v]) => `<div class="spec"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:auto">
+        <button class="btn btn-n" style="flex:1" onclick="openSpecs('${p.id}')">Alle Specs</button>
+        <button class="btn btn-p" style="flex:1" onclick="openPay('${p.id}')">Kaufen</button>
+      </div>
+    </div>`).join('');
+}
+function closeModal() { $('modal').classList.remove('on'); }
+function openSpecs(id) {
+  const p = planById(id);
+  if (!p) return;
+  $('modal-box').innerHTML = `
+    <div class="tb-title" style="font-size:22px">${esc(p.name)}</div>
+    <div class="tb-sub">${esc(p.desc||'')}</div>
+    <div class="price" style="margin:12px 0">${money(p.price)}<span style="font-size:13px;color:var(--t2)"> / 30 Tage</span></div>
+    ${specLines(p).map(([k,v]) => `<div class="spec"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn btn-n" onclick="closeModal()">Schließen</button>
+      <button class="btn btn-p" onclick="openPay('${p.id}')">Weiter zur Zahlung</button>
+    </div>`;
+  $('modal').classList.add('on');
+}
+function openPay(id) {
+  const p = planById(id);
+  if (!p) return;
+  $('modal-box').innerHTML = `
+    <div class="tb-title" style="font-size:22px">Paysafecard</div>
+    <div class="tb-sub">Paket ${esc(p.name)} · ${money(p.price)} · kein Name jetzt</div>
+    ${specLines(p).slice(0,4).map(([k,v]) => `<div class="spec"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
+    <div class="hero-pay" style="margin-top:16px">
+      <span class="psc">paysafecard</span>
+      <div class="tb-sub" style="margin-top:8px">Du gehst zur offiziellen Paysafe-Seite und gibst dort die 16-stellige PIN ein. Bei uns wird die PIN nicht gespeichert und nicht abgefragt.</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn btn-n" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-p" onclick="buyPlan('${p.id}')">Mit Paysafecard zahlen</button>
+    </div>`;
+  $('modal').classList.add('on');
+}
+let openTicketId = '';
+let tkTimer = null;
+function tkStatus(s) {
+  return ({ open: 'Offen', answered: 'Support hat geantwortet', closed: 'Geschlossen' }[s] || s);
+}
+function ticketEls() {
+  if (role === 'admin' && currentHomeTab === 'admin') {
+    return { head: $('admin-tk-head'), msgs: $('admin-tk-msgs'), reply: $('admin-tk-reply'), input: $('admin-tk-reply-in') };
+  }
+  return { head: $('tk-head'), msgs: $('tk-msgs'), reply: $('tk-reply'), input: $('tk-reply-in') };
+}
+function ticketRow(t) {
+  return `
+    <button class="tk-item ${t.id===openTicketId?'on':''}" onclick="jumpTicket('${t.id}')">
+      <div style="display:flex;justify-content:space-between;gap:8px">
+        <div style="font-weight:700">${esc(t.subject)}</div>
+        ${t.unread?'<span class="psc">NEU</span>':''}
+      </div>
+      <div style="color:var(--t3);font-size:11px;margin-top:3px">${esc(tkStatus(t.status))} · ${esc(t.username||'')} · ${esc(t.email||'')}</div>
+      <div style="color:var(--t2);font-size:12px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.last||'')}</div>
+    </button>`;
+}
+function renderTickets(list) {
+  const box = $('tk-list');
+  const adminBox = $('admin-tickets');
+  const visible = role === 'admin' ? list : list.filter(t => t.status !== 'closed');
+  if (box) {
+    box.innerHTML = visible.length ? visible.map(ticketRow).join('') : '<div style="padding:16px;color:var(--t2)">Noch keine Tickets.</div>';
+  }
+  if (adminBox) {
+    const mine = role === 'admin' ? list : [];
+    adminBox.innerHTML = mine.length ? mine.map(ticketRow).join('') : '<div style="padding:16px;color:var(--t2)">Keine Kunden-Tickets.</div>';
+  }
+  const unread = list.filter(t => t.unread || t.status === 'open').length;
+  const badge = $('tk-badge');
+  if (badge) {
+    badge.textContent = unread;
+    badge.style.display = role === 'admin' && unread ? 'inline-flex' : 'none';
+  }
+}
+function jumpTicket(id) {
+  if (role === 'admin' && currentHomeTab === 'admin') openTicket(id);
+  else { homeTab('support'); openTicket(id); }
+}
+async function loadTickets() {
+  const r = await api('/api/tickets');
+  if (r.ok) renderTickets(r.tickets || []);
+  if (openTicketId && (currentHomeTab === 'support' || currentHomeTab === 'admin')) {
+    if (r.ok && (r.tickets || []).some(t => t.id === openTicketId)) openTicket(openTicketId, true);
+    else if (role !== 'admin') resetTicketChat();
+  }
+}
+function resetTicketChat() {
+  openTicketId = '';
+  if (tkTimer) { clearInterval(tkTimer); tkTimer = null; }
+  ['tk-head','admin-tk-head'].forEach(id => { if ($(id)) $(id).innerHTML = '<div class="tb-sub">Wähle links ein Ticket</div>'; });
+  ['tk-msgs','admin-tk-msgs'].forEach(id => { if ($(id)) $(id).innerHTML = ''; });
+  ['tk-reply','admin-tk-reply'].forEach(id => { if ($(id)) $(id).style.display = 'none'; });
+}
+async function openTicket(id, quiet) {
+  openTicketId = id;
+  const r = await api('/api/tickets/'+id);
+  if (!r.ok) { if (!quiet) toast('❌ '+(r.msg||'Fehler'),'err'); return; }
+  const t = r.ticket;
+  const ui = ticketEls();
+  document.querySelectorAll('.tk-item').forEach(el => el.classList.toggle('on', (el.getAttribute('onclick')||'').includes("'"+id+"'")));
+  const staff = role === 'admin';
+  const closed = t.status === 'closed';
+  if (ui.head) ui.head.innerHTML = `
+    <div>
+      <div style="font-weight:700">${esc(t.subject)}</div>
+      <div class="tb-sub">${esc(tkStatus(t.status))} · ${esc(t.username||'')} · ${esc(t.email||'')}</div>
+    </div>
+    <div style="display:flex;gap:6px">
+      ${staff && closed
+        ? `<button class="btn btn-n btn-sm" onclick="setTicketStatus('${t.id}','open')">Wieder öffnen</button>`
+        : `<button class="btn btn-r btn-sm" onclick="setTicketStatus('${t.id}','closed')">Ticket schließen</button>`}
+    </div>`;
+  const msgs = t.messages || [];
+  if (ui.msgs) {
+    ui.msgs.innerHTML = msgs.length ? msgs.map(m => {
+      const fromOpener = m.userId ? m.userId === t.userId : m.role !== 'staff';
+      const who = fromOpener ? (m.username === meName ? 'Du' : (m.username || 'Kunde')) : 'Support';
+      return `
+      <div class="tk-b ${fromOpener?'staff':'user'}">
+        <small>${esc(who)} · ${new Date(m.at).toLocaleString('de-DE')}</small>
+        ${esc(m.text)}
+      </div>`;
+    }).join('') : '<div class="tb-sub">Noch keine Nachrichten.</div>';
+    ui.msgs.scrollTop = ui.msgs.scrollHeight;
+  }
+  if (ui.reply) ui.reply.style.display = (staff || !closed) ? 'flex' : 'none';
+  if (ui.input) ui.input.placeholder = staff ? 'Antwort als Support…' : 'Nachricht an den Support…';
+  if (tkTimer) clearInterval(tkTimer);
+  tkTimer = setInterval(() => {
+    if ((currentHomeTab === 'support' || currentHomeTab === 'admin') && openTicketId) openTicket(openTicketId, true);
+  }, 4000);
+}
+async function replyTicket() {
+  if (!openTicketId) return;
+  const ui = ticketEls();
+  const message = (ui.input && ui.input.value || '').trim();
+  if (!message) return;
+  const r = await api('/api/tickets/'+openTicketId+'/reply','POST',{message});
+  if (!r.ok) { toast('❌ '+(r.msg||'Fehler'),'err'); return; }
+  if (ui.input) ui.input.value = '';
+  await loadTickets();
+}
+async function setTicketStatus(id, status) {
+  const action = status === 'closed' ? 'close' : 'open';
+  const r = await api('/api/tickets/'+id+'/'+action,'POST',{});
+  toast(r.ok ? (status==='closed' ? (role==='admin' ? 'Ticket geschlossen — Kunde sieht es nicht mehr' : 'Ticket geschlossen') : 'Ticket wieder offen') : '❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) {
+    if (status === 'closed' && role !== 'admin') resetTicketChat();
+    else openTicketId = id;
+    await loadTickets();
+  }
+}
+function renderOrders(list) {
+  const admin = $('admin-orders');
+  const pending = list.filter(o => o.status === 'pending');
+  if (admin) {
+    admin.innerHTML = pending.length
+      ? pending.map(o => `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--b1)"><div><b>${esc(o.planName||o.planId)}</b> · ${esc(o.payMethod||'')} · ${esc(o.email||o.username||'')} · ${money(o.price)}</div><button class="btn btn-p btn-sm" onclick="fulfillOrder('${o.id}')">Freischalten</button></div>`).join('')
+      : 'Keine offenen Zahlungen.';
+  }
+}
+async function buyPlan(planId) {
+  const r = await api('/api/shop/buy','POST',{planId});
+  if (r.ok && r.redirect) {
+    toast('Weiterleitung zu Paysafecard…','ok');
+    location.href = r.redirect;
+    return;
+  }
+  toast('❌ '+(r.msg||'Zahlung nicht möglich'),'err');
+}
+async function fulfillOrder(id) {
+  const r = await api('/api/orders/'+id+'/fulfill','POST',{});
+  toast(r.ok?'✅ Server angelegt':'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) showHome();
+}
+async function sendTicket() {
+  const subject = $('tk-sub').value.trim();
+  const message = $('tk-msg').value.trim();
+  if (!message) { toast('Bitte eine Nachricht schreiben','err'); return; }
+  const r = await api('/api/tickets','POST',{subject, message});
+  toast(r.ok?'Ticket erstellt — du kannst weiter schreiben.':'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) {
+    $('tk-sub').value='';
+    $('tk-msg').value='';
+    openTicketId = r.ticket.id;
+    homeTab('support');
+    await loadTickets();
+  }
+}
+async function createServer() {
+  const name = $('new-srv').value.trim();
+  const email = $('new-srv-email').value.trim();
+  const r = await api('/api/servers','POST',{name, email});
+  if (r.ok && r.warn) toast('⚠️ Server erstellt, Vergabe: '+r.warn, 'err');
+  else toast(r.ok?(email?'✅ Server erstellt und vergeben':'✅ Server erstellt'):'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) { $('new-srv').value=''; $('new-srv-email').value=''; showHome(); }
+}
+async function assignServer(id) {
+  const email = prompt('An welche E-Mail vergeben? Die Person muss sich schon mit dieser Mail registriert haben.');
+  if (!email) return;
+  const old = serverId; serverId = '';
+  const r = await api('/api/servers/'+id+'/assign','POST',{email:email.trim()});
+  serverId = old;
+  toast(r.ok?'📨 Server an die E-Mail übergeben':'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) showHome();
+}
+function openServer(id, name) {
+  serverId = id;
+  localStorage.setItem('eh3s', id);
+  cSince = 0;
+  $('home').style.display = 'none';
+  $('app').style.display = 'flex';
+  $('sb-name').textContent = name || 'Server';
+  if ($('app-srv-title')) $('app-srv-title').textContent = name || 'Server';
+  if ($('main-con')) $('main-con').innerHTML='';
+  if ($('d-con')) $('d-con').innerHTML='';
+  applyRole();
+  init();
+  go('dashboard', document.querySelectorAll('.ni')[1]);
+}
+
+let _tt;
+function toast(msg, type='ok') {
+  $('t-msg').textContent = msg;
+  const t = $('toast');
+  t.className = 'toast show ' + type;
+  clearTimeout(_tt);
+  _tt = setTimeout(() => t.className = 'toast', 3500);
+}
+
+function go(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(b => b.classList.remove('on'));
+  $('page-'+page).classList.add('on');
+  if (btn) btn.classList.add('on');
+  if (page === 'files') loadFiles('');
+  if (page === 'users') loadUsers();
+  if (page === 'serverconf') loadProps();
+  if (page === 'plugins') { loadInstalledPlugins(); searchPlugins(1); }
+  if (page === 'backups') loadBackups();
+  if (page === 'settings') loadPanelSettings();
+}
+
+function init() {
+  refreshStatus();
+  pollConsole();
+  setInterval(refreshStatus, 5000);
+  setInterval(pollConsole, 1500);
+}
+
+// ── Status ───────────────────────────────────
+async function refreshStatus() {
+  const s = await api('/api/status');
+  if (s.running === undefined) return;
+  const on = s.running;
+  $('sb-pill').className = 'pill ' + (on?'on':'off');
+  $('sb-dot').className = 'pdot' + (on?' pulse':'');
+  $('sb-txt').textContent = on ? 'Online' : 'Offline';
+  const ds = $('d-status');
+  ds.textContent = on ? 'Online' : 'Offline';
+  ds.className = 'sc-val ' + (on?'g':'r');
+  $('d-badge').textContent = on ? 'Läuft' : 'Gestoppt';
+  $('d-badge').className = 'sc-badge ' + (on?'g':'r');
+  $('d-ram').textContent = s.memUsed + ' MB';
+  $('d-ram2').textContent = 'von ' + s.memTotal + ' MB';
+  $('d-cpu').textContent = (s.cpuLoad ?? '–') + '%';
+  const h=Math.floor(s.uptime/3600), m=Math.floor((s.uptime%3600)/60);
+  $('d-up').textContent = 'Panel '+h+'h '+String(m).padStart(2,'0')+'m';
+  $('d-ip').textContent = s.localIP + ':' + (s.port || '25565');
+  if ($('d-port')) $('d-port').textContent = s.port || '25565';
+  $('d-players').textContent = s.playerCount ?? 0;
+  $('d-plist').textContent = (s.players && s.players.length) ? s.players.join(', ') : (on ? 'Niemand online' : '–');
+  if ($('d-badge')) $('d-badge').textContent = on ? (s.owned ? 'Panel-Prozess' : 'Läuft (extern)') : 'Gestoppt';
+  if ($('btn-start')) {
+    $('btn-start').disabled = on;
+    $('btn-stop').disabled = !on;
+    if ($('btn-restart')) $('btn-restart').disabled = !on;
+  }
+}
+
+// ── Server ctrl ──────────────────────────────
+async function startServer() {
+  const r = await api('/api/start','POST');
+  toast(r.ok ? '▶ Server wird gestartet…' : '❌ '+r.msg, r.ok?'ok':'err');
+  if (r.ok) setTimeout(refreshStatus,3000);
+}
+async function stopServer() {
+  if (!confirm('Server wirklich stoppen?')) return;
+  const r = await api('/api/stop','POST');
+  toast(r.ok ? '⏹ Server wird gestoppt' : '❌ '+r.msg, r.ok?'ok':'err');
+  setTimeout(refreshStatus, 2000);
+}
+async function restartServer() {
+  if (!confirm('Server neu starten? Spieler werden gekickt.')) return;
+  const r = await api('/api/restart','POST');
+  toast(r.ok ? '↻ Server startet neu…' : '❌ '+r.msg, r.ok?'ok':'err');
+  setTimeout(refreshStatus, 4000);
+}
+function copyIP() {
+  navigator.clipboard.writeText($('d-ip').textContent);
+  toast('IP kopiert!','ok');
+}
+
+// ── Console ──────────────────────────────────
+function lcls(t) {
+  t = t.toLowerCase();
+  if (t.includes('error')||t.includes('exception')||t.includes('fatal')) return 'error';
+  if (t.includes('warn')) return 'warn';
+  if (t.startsWith('>')) return 'cmd';
+  if (t.includes('done')||t.includes('enabled')||t.includes('started')) return 'ok';
+  if (t.includes('info')) return 'info';
+  return '';
+}
+async function pollConsole() {
+  const r = await api('/api/console?since='+cSince);
+  if (!r.logs||!r.logs.length) return;
+  cSince = r.total;
+  ['main-con','d-con'].forEach(id => {
+    const el = $(id); if(!el) return;
+    r.logs.forEach(l => {
+      const d = document.createElement('div');
+      d.className = 'log '+lcls(l.text);
+      d.textContent = l.text;
+      el.appendChild(d);
+    });
+    if (id==='d-con') while(el.children.length>50) el.removeChild(el.firstChild);
+    el.scrollTop = el.scrollHeight;
+  });
+}
+async function sendCmd() {
+  const inp = $('cmd-in'); const cmd = inp.value.trim(); if(!cmd) return;
+  inp.value = '';
+  const r = await api('/api/command','POST',{cmd});
+  if (!r.ok) toast('❌ '+r.msg,'err');
+}
+async function qc(cmd) {
+  if (!cmd.trim()) return;
+  const r = await api('/api/command','POST',{cmd});
+  toast(r.ok?'✅ '+cmd:'❌ '+r.msg, r.ok?'ok':'err');
+}
+
+// ── Files ────────────────────────────────────
+function fmtSz(b){if(!b)return'0 B';if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
+async function loadFiles(dir) {
+  curPath = dir;
+  $('fbwrap').style.display = '';
+  $('edwrap').style.display = 'none';
+  $('f-sub').textContent = dir || 'Server-Verzeichnis';
+  // breadcrumb
+  const bc = $('bc'); bc.innerHTML = '';
+  const addCrumb = (label,p) => { const s=document.createElement('span'); s.className='bc-item'; s.textContent=label; s.onclick=()=>loadFiles(p); bc.appendChild(s); };
+  addCrumb('🏠 Root','');
+  if (dir) { dir.split('/').filter(Boolean).forEach((p,i,arr) => { const sep=document.createElement('span'); sep.className='bc-sep'; sep.textContent='/'; bc.appendChild(sep); addCrumb(p,arr.slice(0,i+1).join('/')); }); }
+  const r = await api('/api/files?dir='+encodeURIComponent(dir));
+  const tb = $('flist'); tb.innerHTML='';
+  if (!r.ok) { toast('❌ '+r.msg,'err'); return; }
+  if (dir) {
+    const up=document.createElement('tr'); const par=dir.split('/').slice(0,-1).join('/');
+    up.innerHTML=`<td colspan="4"><span class="fn dir" onclick="loadFiles('${par}')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>..</span></td>`; tb.appendChild(up);
+  }
+  [...r.entries].sort((a,b)=>(b.isDir-a.isDir)||a.name.localeCompare(b.name)).forEach(e => {
+    const fp = dir?dir+'/'+e.name:e.name;
+    const folderIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+    const fileIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="fn${e.isDir?' dir':''}" onclick="${e.isDir?`loadFiles('${fp}')`:`openFile('${fp}')`}">${e.isDir?folderIcon:fileIcon}${e.name}</span></td><td class="fsize">${e.isDir?'—':fmtSz(e.size)}</td><td class="fdate">${new Date(e.modified).toLocaleDateString('de-DE')}</td><td>${role==='admin'?`<button class="btn btn-r btn-sm" onclick="delEntry('${fp}','${e.name}')"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>`:'&nbsp;'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+async function openFile(fp) {
+  const r = await api('/api/file?path='+encodeURIComponent(fp));
+  if (!r.ok) { toast('❌ '+r.msg,'err'); return; }
+  curFile = fp; $('ed-path').textContent = fp; $('ed-ta').value = r.content;
+  $('fbwrap').style.display='none'; $('edwrap').style.display='block';
+}
+async function saveFile() {
+  const r = await api('/api/file','POST',{path:curFile,content:$('ed-ta').value});
+  toast(r.ok?'💾 Gespeichert!':'❌ '+r.msg, r.ok?'ok':'err');
+}
+function closeEd() { $('edwrap').style.display='none'; $('fbwrap').style.display=''; loadFiles(curPath); }
+async function delEntry(fp,name) {
+  if (!confirm('"'+name+'" wirklich löschen?')) return;
+  const r = await api('/api/file','DELETE',{path:fp});
+  toast(r.ok?'🗑 Gelöscht':'❌ '+r.msg, r.ok?'ok':'err');
+  if (r.ok) loadFiles(curPath);
+}
+
+// ── Plugins ──────────────────────────────────
+async function loadInstalledPlugins() {
+  const r = await api('/api/plugins/installed');
+  const tb = $('plug-installed');
+  if (!tb) return;
+  if (!r.ok) { tb.innerHTML = `<tr><td colspan="3" style="color:var(--red);padding:16px">${r.msg||'Fehler'}</td></tr>`; return; }
+  if (!r.plugins.length) { tb.innerHTML = `<tr><td colspan="3" style="color:var(--t2);padding:16px">Keine Jars in plugins/</td></tr>`; return; }
+  tb.innerHTML = r.plugins.map(p => `<tr><td>${p.name}</td><td class="fsize">${fmtSz(p.size)}</td><td>${role==='admin'?`<button class="btn btn-r btn-sm" onclick="delPlugin('${p.name.replace(/'/g,"\\'")}')">Löschen</button>`:''}</td></tr>`).join('');
+}
+async function delPlugin(name) {
+  if (!confirm(name+' löschen?')) return;
+  const r = await api('/api/plugins/installed','DELETE',{name});
+  toast(r.ok?'🗑 Plugin entfernt':'❌ '+r.msg, r.ok?'ok':'err');
+  if (r.ok) loadInstalledPlugins();
+}
+async function loadBackups() {
+  const r = await api('/api/backups');
+  const tb = $('bak-list');
+  if (!tb) return;
+  if (!r.ok) { tb.innerHTML = `<tr><td colspan="4" style="color:var(--red);padding:16px">${r.msg||'Fehler'}</td></tr>`; return; }
+  if (!r.backups.length) { tb.innerHTML = `<tr><td colspan="4" style="color:var(--t2);padding:16px">Noch keine Backups</td></tr>`; return; }
+  tb.innerHTML = r.backups.map(b => `<tr><td>${b.name}</td><td class="fsize">${fmtSz(b.size)}</td><td class="fdate">${new Date(b.modified).toLocaleString('de-DE')}</td><td>${role==='admin'?`<button class="btn btn-r btn-sm" onclick="delBackup('${b.name.replace(/'/g,"\\'")}')">Löschen</button>`:''}</td></tr>`).join('');
+}
+async function makeBackup() {
+  toast('Backup läuft…','info');
+  const r = await api('/api/backups','POST');
+  toast(r.ok?'✅ Backup fertig: '+r.file:'❌ '+r.msg, r.ok?'ok':'err');
+  if (r.ok) loadBackups();
+}
+async function delBackup(name) {
+  if (!confirm(name+' löschen?')) return;
+  const r = await api('/api/backups','DELETE',{name});
+  toast(r.ok?'🗑 Backup gelöscht':'❌ '+r.msg, r.ok?'ok':'err');
+  if (r.ok) loadBackups();
+}
+async function loadPanelSettings() {
+  const r = await api('/api/settings');
+  if (!r.ok) return;
+  const s = r.settings || {};
+  if ($('set-dir')) $('set-dir').value = s.mcDir || '';
+  if ($('set-jar')) $('set-jar').value = s.mcJar || 'auto';
+  if ($('set-args')) $('set-args').value = s.javaArgs || '';
+  if ($('set-java')) $('set-java').value = s.javaPath || '';
+  if ($('set-pub')) $('set-pub').value = s.publicBaseUrl || '';
+  if ($('set-psc-user')) $('set-psc-user').value = s.paysafeUser || '';
+  if ($('set-psc-acc')) $('set-psc-acc').value = s.paysafeAccountId || '';
+  if ($('set-psc-env')) $('set-psc-env').value = s.paysafeEnv || 'test';
+  if ($('set-psc-key')) $('set-psc-key').placeholder = s.paysafeKeySet ? 'gesetzt — leer lassen' : 'API Key';
+}
+async function savePanelSettings() {
+  const r = await api('/api/settings','POST',{
+    mcDir: $('set-dir').value.trim(),
+    mcJar: $('set-jar').value.trim() || 'auto',
+    javaArgs: $('set-args').value.trim(),
+    javaPath: $('set-java').value.trim(),
+    publicBaseUrl: ($('set-pub')||{}).value ? $('set-pub').value.trim() : '',
+    paysafeUser: ($('set-psc-user')||{}).value ? $('set-psc-user').value.trim() : '',
+    paysafeKey: ($('set-psc-key')||{}).value ? $('set-psc-key').value.trim() : '',
+    paysafeAccountId: ($('set-psc-acc')||{}).value ? $('set-psc-acc').value.trim() : '',
+    paysafeEnv: ($('set-psc-env')||{}).value || 'test',
+  });
+  toast(r.ok?(r.paysafeReady?'Paysafecard ist aktiv.':'Gespeichert. Paysafe-Keys fehlen noch.'):'❌ '+r.msg, r.ok?'ok':'err');
+}
+let plugPage = 1;
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function quickPlug(name){ $('plug-q').value = name; searchPlugins(1); }
+async function searchPlugins(page) {
+  plugPage = page || 1;
+  const q = $('plug-q').value.trim();
+  const res = $('plug-res');
+  res.innerHTML = '<div style="color:var(--t2);padding:20px 0">Lädt Plugin-Katalog…</div>';
+  const r = await api('/api/plugins/catalog?q='+encodeURIComponent(q)+'&page='+plugPage);
+  if (!r.ok||!r.results||!r.results.length) {
+    res.innerHTML='<div style="color:var(--t2);padding:20px 0">Keine Plugins gefunden.</div>';
+    $('plug-pages').innerHTML='';
+    return;
+  }
+  const grid = document.createElement('div'); grid.className='plug-grid';
+  r.results.forEach(p => {
+    const dl = p.downloads?Number(p.downloads).toLocaleString('de-DE'):'?';
+    const rating = p.rating?.average?parseFloat(p.rating.average).toFixed(1):'?';
+    const icon = p.icon || ('/api/plugins/icon/'+p.id);
+    const card = document.createElement('div'); card.className='pcard';
+    card.innerHTML=`<div class="pcard-top"><img class="pcard-icon" src="${esc(icon)}" alt="" onerror="this.classList.add('miss');this.removeAttribute('src');this.alt='🧩'">
+      <div><div class="pcard-name">${esc(p.name)}</div><div class="pcard-tag">${esc((p.tag||'').slice(0,120))}</div></div></div>
+      <div class="pcard-meta"><span class="pmeta">${dl} Downloads</span><span class="pmeta">⭐ ${rating}</span>${p.external?'<span class="pmeta">extern</span>':''}</div>
+      <div style="display:flex;align-items:center;gap:8px"><button class="btn btn-p btn-sm" id="ibtn${p.id}">Installieren</button><span id="iload${p.id}" style="display:none;color:var(--t2);font-size:12px;align-items:center;gap:6px"><span class="pspinner"></span>Lädt…</span><span id="idone${p.id}" style="display:none;color:var(--green);font-size:12px">✅ Installiert</span></div>`;
+    card.querySelector('#ibtn'+p.id).onclick = () => installPlugin(p.id, p.name);
+    grid.appendChild(card);
+  });
+  res.innerHTML=''; res.appendChild(grid);
+  $('plug-pages').innerHTML = `<button class="btn btn-n btn-sm" ${plugPage<=1?'disabled':''} onclick="searchPlugins(${plugPage-1})">Zurück</button><span style="color:var(--t2);font-size:12px">Seite ${plugPage}</span><button class="btn btn-n btn-sm" onclick="searchPlugins(${plugPage+1})">Weiter</button>`;
+}
+async function installPlugin(id, name) {
+  const btn = $('ibtn'+id), load = $('iload'+id), done = $('idone'+id);
+  if (btn) btn.style.display='none';
+  if (load) load.style.display='flex';
+  const r = await api('/api/plugins/install','POST',{id,name});
+  if (load) load.style.display='none';
+  if (r.ok) {
+    if (done) done.style.display='inline';
+    toast('✅ '+name+' installiert. Server neu starten.','ok');
+    loadInstalledPlugins();
+  } else {
+    if (btn) btn.style.display='';
+    toast('❌ '+ (r.msg || 'Download fehlgeschlagen. Versuch JAR unter Dateien hochladen.'), 'err');
+  }
+}
+async function uploadPicked(files, dir) {
+  if (!files || !files.length) return;
+  for (const file of files) {
+    toast('Lade '+file.name+' hoch…','info');
+    try {
+      const r = await fetch('/api/upload?dir='+encodeURIComponent(dir||'')+'&name='+encodeURIComponent(file.name), {
+        method: 'POST',
+        headers: { Authorization: token, 'X-Server-Id': serverId },
+        credentials: 'include',
+        body: file
+      });
+      const j = await r.json();
+      toast(j.ok ? '✅ '+file.name+' hochgeladen' : '❌ '+(j.msg||'Upload fehlgeschlagen'), j.ok?'ok':'err');
+    } catch(e) {
+      toast('❌ '+e.message,'err');
+    }
+  }
+  if ($('f-up')) $('f-up').value='';
+  if ($('plug-up')) $('plug-up').value='';
+  if (dir === 'plugins' || (dir||'').replace(/\\/g,'/').startsWith('plugins')) loadInstalledPlugins();
+  if ($('page-files') && $('page-files').classList.contains('on')) loadFiles(curPath);
+}
+function onDropFiles(ev) {
+  ev.preventDefault();
+  if (role !== 'admin') return;
+  uploadPicked(ev.dataTransfer.files, curPath);
+}
+
+// ── Server Props ─────────────────────────────
+async function loadProps() {
+  const r = await api('/api/serverprops');
+  if (!r.ok) { toast('❌ '+r.msg,'err'); return; }
+  const p = r.props;
+  const set = (id,key,def='') => { const el=$(id); if(el) el.value=p[key]||def; };
+  set('prop-motd','motd','A Minecraft Server');
+  set('prop-maxplayers','max-players','20');
+  set('prop-gamemode','gamemode','survival');
+  set('prop-difficulty','difficulty','normal');
+  set('prop-pvp','pvp','true');
+  set('prop-online','online-mode','true');
+  set('prop-whitelist','white-list','false');
+  set('prop-port','server-port','25565');
+}
+async function saveProps() {
+  const props = {
+    'motd': $('prop-motd').value,
+    'max-players': $('prop-maxplayers').value,
+    'gamemode': $('prop-gamemode').value,
+    'difficulty': $('prop-difficulty').value,
+    'pvp': $('prop-pvp').value,
+    'online-mode': $('prop-online').value,
+    'white-list': $('prop-whitelist').value,
+    'server-port': $('prop-port').value,
+  };
+  const r = await api('/api/serverprops','POST',{props});
+  toast(r.ok?'✅ Gespeichert! Server neu starten damit Änderungen aktiv werden.':'❌ '+r.msg, r.ok?'ok':'err');
+}
+
+// ── Users ────────────────────────────────────
+async function loadUsers() {
+  const r = await api('/api/users');
+  if (!r.ok) return;
+  const tb = $('user-list'); tb.innerHTML='';
+  r.users.forEach(u => {
+    const tr=document.createElement('tr');
+    const date=new Date(u.createdAt).toLocaleDateString('de-DE');
+    tr.innerHTML=`<td style="font-weight:600">${esc(u.username)}</td><td style="color:var(--t2);font-size:12px">${esc(u.email||'–')}</td><td><span class="role-badge ${u.role}">${u.role}</span></td><td style="color:var(--t2);font-size:12px">${date}</td><td><div style="display:flex;gap:6px;align-items:center"><input type="password" placeholder="Neues Passwort" id="pw-${u.id}" style="background:var(--bg);border:1px solid var(--b2);border-radius:var(--r);color:var(--text);font-size:12px;padding:5px 8px;outline:none;width:140px"><button class="btn btn-n btn-sm" onclick="changePass('${u.id}')">Ändern</button></div></td><td>${u.id!=='admin'?`<button class="btn btn-r btn-sm" onclick="deleteUser('${u.id}','${u.username}')"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>`:'&nbsp;'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+async function createUser() {
+  const name=$('nu-name').value.trim(), email=$('nu-email').value.trim(), pass=$('nu-pass').value, role_=$('nu-role').value;
+  if(!name||!pass||!email){toast('Name, E-Mail und Passwort erforderlich','err');return;}
+  const r=await api('/api/users','POST',{username:name,email,password:pass,role:role_});
+  if(r.ok){toast('✅ Benutzer erstellt','ok');$('nu-name').value='';$('nu-email').value='';$('nu-pass').value='';loadUsers();}
+  else toast('❌ '+r.msg,'err');
+}
+async function deleteUser(id,name){
+  if(!confirm('"'+name+'" wirklich löschen?'))return;
+  const r=await api('/api/users/'+id,'DELETE');
+  toast(r.ok?'🗑 Gelöscht':'❌ '+r.msg,r.ok?'ok':'err');
+  if(r.ok)loadUsers();
+}
+async function changePass(id){
+  const pw=document.getElementById('pw-'+id)?.value;
+  if(!pw){toast('Kein Passwort eingegeben','err');return;}
+  const r=await api('/api/users/'+id,'PUT',{password:pw});
+  toast(r.ok?'✅ Passwort geändert':'❌ '+r.msg,r.ok?'ok':'err');
+  if(r.ok)document.getElementById('pw-'+id).value='';
+}
+</script>
+</body>
+</html>
