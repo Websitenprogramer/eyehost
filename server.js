@@ -241,9 +241,9 @@ const DEFAULT_PLANS = [
     desc: 'Mehr Power, Events, Mods',
   },
   {
-    id: 'panel', kind: 'panel', name: 'Panel', ram: 'Dein Root', cpu: 'SSH', disk: 'Auf deinem VPS',
+    id: 'panel', kind: 'panel', name: 'eyePanel', ram: 'Dein Root', cpu: 'SSH', disk: 'Auf deinem VPS',
     players: '–', backups: '–', loc: 'Dein Server', ddos: false, days: 30, price: 9.99,
-    desc: 'Eigenes Eye Host Panel. Nach dem Kauf verbindest du deinen Root-Server.',
+    desc: 'Nur Panel. Kein Hosting — du verbindest deinen eigenen Root-Server.',
   },
 ];
 
@@ -253,10 +253,9 @@ function isPanelPlan(plan) {
 
 function shopPlans() {
   const base = Array.isArray(DB.plans) && DB.plans.length ? DB.plans : DEFAULT_PLANS;
-  if (!base.some((p) => isPanelPlan(p))) {
-    return [...base, DEFAULT_PLANS.find((p) => p.id === 'panel')];
-  }
-  return base;
+  const panels = base.filter(isPanelPlan);
+  if (panels.length) return panels;
+  return [DEFAULT_PLANS.find((p) => p.id === 'panel')].filter(Boolean);
 }
 
 function paysafeReady() {
@@ -337,34 +336,22 @@ function fulfillPaidOrder(order) {
   const buyer = DB.users.find((u) => u.id === order.userId);
   if (!buyer) return { ok: false, msg: 'Käufer nicht gefunden.' };
   const plan = shopPlans().find((x) => x.id === order.planId);
-  if (isPanelPlan(plan) || order.kind === 'panel') {
-    const made = createPanelLicense(buyer, {
-      planId: order.planId || 'panel',
-      days: order.days,
-      name: order.planName || 'Mein Panel',
-    });
-    if (!made.ok) return made;
-    order.status = 'done';
-    order.paid = true;
-    order.kind = 'panel';
-    order.nodeId = made.node.id;
-    order.paidAt = new Date().toISOString();
-    saveDB();
-    return { ok: true, order, node: made.node, kind: 'panel' };
+  if (!(isPanelPlan(plan) || order.kind === 'panel' || order.planId === 'panel')) {
+    return { ok: false, msg: 'Nur eyePanel — kein Server-Hosting.' };
   }
-  const made = createGameServer(buyer, order.planName || 'Server', {
-    planId: order.planId,
-    ram: order.ram,
-    players: order.players,
+  const made = createPanelLicense(buyer, {
+    planId: order.planId || 'panel',
     days: order.days,
+    name: order.planName || 'eyePanel',
   });
   if (!made.ok) return made;
   order.status = 'done';
   order.paid = true;
-  order.serverId = made.server.id;
+  order.kind = 'panel';
+  order.nodeId = made.node.id;
   order.paidAt = new Date().toISOString();
   saveDB();
-  return { ok: true, order, server: made.server };
+  return { ok: true, order, node: made.node, kind: 'panel' };
 }
 
 async function completePaysafeOrder(order) {
@@ -545,7 +532,7 @@ function createGameServer(user, name, extra = {}) {
 function publicNode(n) {
   return {
     id: n.id,
-    name: n.name || 'Mein Panel',
+    name: n.name || 'eyePanel',
     plan: n.planId || 'panel',
     host: n.host || '',
     sshPort: n.sshPort || 22,
@@ -570,7 +557,7 @@ function createPanelLicense(user, extra = {}) {
     id: crypto.randomBytes(4).toString('hex'),
     ownerId: user.id,
     planId: extra.planId || 'panel',
-    name: String(extra.name || 'Mein Panel').trim().slice(0, 40) || 'Mein Panel',
+    name: String(extra.name || 'eyePanel').trim().slice(0, 40) || 'eyePanel',
     host: '',
     sshPort: 22,
     sshUser: 'root',
@@ -1460,24 +1447,15 @@ const server = http.createServer(async (req, res) => {
     }
     const plan = shopPlans().find((x) => x.id === b.planId);
     if (!plan) return json(res, { ok: false, msg: 'Paket nicht gefunden.' }, 404);
+    if (!isPanelPlan(plan)) return json(res, { ok: false, msg: 'Nur eyePanel — kein Hosting.' }, 400);
     if (user.role === 'admin' && b.instant) {
-      if (isPanelPlan(plan)) {
-        const made = createPanelLicense(user, {
-          planId: plan.id,
-          days: plan.days,
-          name: plan.name,
-        });
-        if (!made.ok) return json(res, made, 400);
-        return json(res, { ok: true, instant: true, kind: 'panel', node: made.node });
-      }
-      const made = createGameServer(user, plan.name, {
+      const made = createPanelLicense(user, {
         planId: plan.id,
-        ram: plan.ram,
-        players: plan.players,
         days: plan.days,
+        name: plan.name,
       });
       if (!made.ok) return json(res, made, 400);
-      return json(res, { ok: true, instant: true, server: made.server });
+      return json(res, { ok: true, instant: true, kind: 'panel', node: made.node });
     }
     if (!paysafeReady()) {
       return json(res, { ok: false, msg: 'Paysafecard ist noch nicht eingerichtet. Der Host muss die API-Keys im Admin eintragen.' }, 503);
@@ -1739,7 +1717,7 @@ const server = http.createServer(async (req, res) => {
     const sshPort = Math.max(1, Math.min(65535, parseInt(b.port || b.sshPort || 22, 10) || 22));
     const sshUser = String(b.user || b.sshUser || 'root').trim().slice(0, 64) || 'root';
     const sshPass = String(b.password || b.sshPass || '');
-    const name = String(b.name || rec.name || 'Mein Panel').trim().slice(0, 40);
+    const name = String(b.name || rec.name || 'eyePanel').trim().slice(0, 40);
     if (!validRemoteHost(host)) {
       return json(res, { ok: false, msg: 'Ungültige IP oder Domain. Kein lokales Netz.' }, 400);
     }

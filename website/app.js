@@ -31,10 +31,7 @@ function resolveApi() {
 const API = resolveApi();
 const PAGE = document.body.getAttribute('data-page') || 'shop';
 const FALLBACK_PLANS = [
-  { id: 'starter', name: 'Starter', ram: '2G', cpu: '1 vCore', disk: '15 GB NVMe', players: 10, backups: 1, loc: 'Deutschland', ddos: true, days: 30, price: 4.99, desc: 'Für Tests und kleine Welten' },
-  { id: 'plus', name: 'Plus', ram: '4G', cpu: '2 vCores', disk: '30 GB NVMe', players: 20, backups: 3, loc: 'Deutschland', ddos: true, days: 30, price: 8.99, desc: 'Für Freunde und Plugins' },
-  { id: 'pro', name: 'Pro', ram: '8G', cpu: '3 vCores', disk: '60 GB NVMe', players: 40, backups: 7, loc: 'Deutschland', ddos: true, days: 30, price: 14.99, desc: 'Mehr Power, Events, Mods' },
-  { id: 'panel', kind: 'panel', name: 'Panel', ram: 'Dein Root', cpu: 'SSH', disk: 'Auf deinem VPS', players: '–', backups: '–', loc: 'Dein Server', ddos: false, days: 30, price: 9.99, desc: 'Eigenes Eye Host Panel. Nach dem Kauf verbindest du deinen Root-Server.' },
+  { id: 'panel', kind: 'panel', name: 'eyePanel', ram: 'Dein Root', cpu: 'SSH', disk: 'Auf deinem VPS', players: '–', backups: '–', loc: 'Dein Server', ddos: false, days: 30, price: 9.99, desc: 'Nur Panel. Kein Hosting — du verbindest deinen eigenen Root-Server.' },
 ];
 let token = localStorage.getItem('eh3') || '';
 let me = '';
@@ -119,7 +116,7 @@ async function submitAuth() {
     return;
   }
   renderUser();
-  loadServers();
+  loadNodes();
   loadTickets();
 }
 
@@ -283,39 +280,23 @@ function money(n) {
 }
 
 function specLines(p) {
-  if (p.kind === 'panel' || p.id === 'panel') {
-    return [
-      ['Typ', 'Eigenes Panel', 'Kein Minecraft-Paket auf unserem Host — du bekommst das Panel für deinen Root-Server.'],
-      ['Anbindung', 'SSH / IP', 'Nach dem Kauf trägst du IP, Port, User und Passwort deines VPS ein.'],
-      ['Server', 'Dein Root / VPS', 'Java, RAM und Welt laufen bei dir. Wir liefern nur das Panel.'],
-      ['Steuerung', 'Eye Host', 'Wenn der Root erreichbar ist, steuerst du ihn über Mein Bereich.'],
-      ['Laufzeit', (p.days || 30) + ' Tage', 'Nach der Zahlung ist das Panel so lange aktiv.'],
-    ];
-  }
   return [
-    ['RAM', p.ram || '–', 'Arbeitsspeicher. Mehr RAM = mehr Plugins und eine größere Welt ohne Lag.'],
-    ['CPU', p.cpu || '–', 'Rechenkerne für Chunks, Redstone und Events.'],
-    ['SSD', p.disk || '–', 'NVMe-Speicher für Welt, Plugins und Backups.'],
-    ['Spieler', p.players != null ? String(p.players) : '–', 'Empfohlene Slots, damit der Server flüssig bleibt.'],
-    ['Backups', p.backups != null ? String(p.backups) : '–', 'Wie viele Sicherungen wir für das Paket vorsehen.'],
-    ['Standort', p.loc || 'Deutschland', 'Rechenzentrum. DE = niedrige Ping-Zeiten.'],
-    ['Schutz', p.ddos ? 'DDoS inklusive' : 'Standard', 'Schutz gegen Angriffe auf den Server.'],
-    ['Laufzeit', (p.days || 30) + ' Tage', 'Nach der Zahlung ist das Paket so lange aktiv.'],
+    ['Typ', 'eyePanel', 'Kein Minecraft-Hosting. Nur das Panel für deinen Root-Server.'],
+    ['Anbindung', 'SSH / IP', 'Nach dem Kauf trägst du IP, Port, User und Passwort deines VPS ein.'],
+    ['Server', 'Dein Root / VPS', 'Java, RAM und Welt laufen bei dir. Wir liefern nur das Panel.'],
+    ['Steuerung', 'eyePanel', 'Wenn der Root erreichbar ist, steuerst du ihn über Mein Bereich.'],
+    ['Laufzeit', (p.days || 30) + ' Tage', 'Nach der Zahlung ist das Panel so lange aktiv.'],
   ];
 }
 
 function renderShop(plans) {
   const box = $('shop-list');
   if (!box) return;
-  shopCache = plans || [];
-  if (!shopCache.length) {
-    box.innerHTML = '<div class="card"><p class="note">Shop lädt nicht. Der Host-PC muss laufen.</p></div>';
-    return;
-  }
+  shopCache = (plans || []).filter((p) => p.kind === 'panel' || p.id === 'panel');
+  if (!shopCache.length) shopCache = FALLBACK_PLANS.slice();
   box.innerHTML = shopCache.map((p) => `
-    <article class="card ${p.id === 'plus' || p.id === 'panel' ? 'on' : ''}">
-      ${p.id === 'plus' ? '<div class="badge">Beliebt</div>' : ''}
-      ${p.id === 'panel' ? '<div class="badge">Root-Server</div>' : ''}
+    <article class="card on">
+      <div class="badge">Nur Panel</div>
       <h3>${esc(p.name)}</h3>
       <p class="plan-desc">${esc(p.desc || '')}</p>
       <div class="price">${money(p.price)}<span> / 30 Tage</span></div>
@@ -323,7 +304,7 @@ function renderShop(plans) {
         ${specLines(p).map(([k, v]) => `<div class="spec"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}
       </div>
       <div class="card-actions">
-        <button class="btn btn-n" type="button" onclick="openSpecs('${p.id}')">Specs ansehen</button>
+        <button class="btn btn-n" type="button" onclick="openSpecs('${p.id}')">Details</button>
         <button class="btn btn-p" type="button" onclick="buy('${p.id}')">Jetzt zahlen</button>
       </div>
     </article>`).join('');
@@ -350,7 +331,7 @@ function openSpecs(id) {
     </div>
     <div class="card-actions">
       <button class="btn btn-n" type="button" onclick="closeSpecs()">Schließen</button>
-      <button class="btn btn-p" type="button" onclick="closeSpecs();buy('${p.id}')">Dieses Paket kaufen</button>
+      <button class="btn btn-p" type="button" onclick="closeSpecs();buy('${p.id}')">eyePanel kaufen</button>
     </div>`;
   $('spec-modal').classList.add('on');
 }
@@ -363,7 +344,9 @@ async function loadShop() {
   if (PAGE !== 'shop' || !$('shop-list')) return;
   renderShop(FALLBACK_PLANS);
   const r = await api('/api/shop');
-  if (r.ok && Array.isArray(r.plans) && r.plans.length) renderShop(r.plans);
+  if (r.ok && Array.isArray(r.plans) && r.plans.length) {
+    renderShop(r.plans.filter((p) => p.kind === 'panel' || p.id === 'panel'));
+  }
 }
 
 async function buy(planId) {
@@ -378,8 +361,8 @@ async function buy(planId) {
     return;
   }
   if (r.ok && r.instant) {
-    toast(r.kind === 'panel' ? 'Panel ist da. Jetzt Root-Server verbinden.' : 'Server ist angelegt.');
-    location.href = r.kind === 'panel' ? 'me.html#nodes' : 'me.html';
+    toast('eyePanel ist da. Jetzt Root-Server verbinden.');
+    location.href = 'me.html#nodes';
     return;
   }
   if (r.ok && r.redirect) {
@@ -550,7 +533,6 @@ async function boot() {
   renderUser();
   if (PAGE === 'me') {
     loadNodes();
-    loadServers();
     loadTickets();
   }
 }

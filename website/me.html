@@ -3,19 +3,18 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Mein Bereich – Eye Host</title>
+  <title>Mein Bereich – eyePanel</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css?v=11"/>
+  <link rel="stylesheet" href="style.css?v=12"/>
 </head>
 <body data-page="me">
   <header class="top">
-    <a class="brand" href="#top" onclick="return goShop(event)">Eye<em>Host</em></a>
+    <a class="brand" href="#top" onclick="return goShop(event)">eye<em>Panel</em></a>
     <nav>
       <a href="#top" onclick="return goShop(event)">Shop</a>
       <a href="#nodes">Mein Panel</a>
-      <a href="#servers">Meine Server</a>
       <a href="#tickets">Tickets</a>
     </nav>
     <div class="authbox" id="authbox">
@@ -27,19 +26,13 @@
     <section class="hero" id="top">
       <p class="kicker">Mein Bereich</p>
       <h1>Panel &amp; Tickets</h1>
-      <p class="lead">Panel für deinen Root-Server verbinden, Minecraft-Pakete steuern, Support schreiben.</p>
+      <p class="lead">Root-Server verbinden und Support schreiben. Kein Hosting — nur eyePanel.</p>
     </section>
 
     <section id="nodes">
       <h2>Mein Panel</h2>
       <p class="sub" id="node-hint">Panel kaufen, dann den Root-Server per IP anbinden.</p>
       <div class="srv-grid" id="node-list"></div>
-    </section>
-
-    <section id="servers">
-      <h2>Meine Server</h2>
-      <p class="sub" id="srv-hint">Lade Server…</p>
-      <div class="srv-grid" id="srv-list"></div>
     </section>
 
     <section id="tickets">
@@ -85,7 +78,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <script src="config.js?v=11"></script>
-  <script src="app.js?v=11"></script>
+  <script src="config.js?v=12"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

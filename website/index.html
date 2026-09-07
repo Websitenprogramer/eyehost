@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Eye Host – Minecraft Server kaufen</title>
+  <title>eyePanel – Panel für deinen Root-Server</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css?v=11"/>
+  <link rel="stylesheet" href="style.css?v=12"/>
 </head>
 <body data-page="shop">
   <header class="top">
-    <a class="brand" href="#top" onclick="return goShop(event)">Eye<em>Host</em></a>
+    <a class="brand" href="#top" onclick="return goShop(event)">eye<em>Panel</em></a>
     <nav>
-      <a href="#shop">Pakete</a>
+      <a href="#shop">Panel</a>
       <a href="#pay">Zahlung</a>
       <a class="nav-area" id="nav-area" href="me.html" hidden>Mein Bereich</a>
     </nav>
@@ -26,31 +26,31 @@
   <div class="area-bar" id="area-bar" hidden>
     <div>
       <b>Angemeldet</b>
-      <span>Dein Account gilt auch für Mein Bereich.</span>
+      <span>Dein Panel verbindest du in Mein Bereich.</span>
     </div>
     <a class="btn btn-p btn-sm" href="me.html">Zum Bereich</a>
   </div>
 
   <main>
     <section class="hero" id="top">
-      <p class="kicker">Minecraft Hosting · Deutschland</p>
-      <h1>Dein Minecraft-Server.<br>In unter einer Minute.</h1>
-      <p class="lead">Paket wählen, mit <span class="psc">paysafecard</span> zahlen — oder ein Panel für deinen eigenen Root-Server. PIN nur auf der offiziellen Paysafe-Seite.</p>
+      <p class="kicker">Nur Panel · Kein Hosting</p>
+      <h1>Dein Panel.<br>Dein Root-Server.</h1>
+      <p class="lead">Kein Minecraft-Hosting. Du kaufst <b>eyePanel</b>, verbindest deinen eigenen VPS per SSH und steuerst ihn selbst. Zahlung mit <span class="psc">paysafecard</span>.</p>
       <div class="hero-actions">
-        <a class="btn btn-p" href="#shop">Paket wählen</a>
+        <a class="btn btn-p" href="#shop">Panel kaufen</a>
         <button class="btn btn-n" type="button" onclick="openAuth('login')">Anmelden</button>
       </div>
     </section>
 
     <section class="feat">
-      <div><b>Standort DE</b><p>Niedrige Ping-Zeiten, Host in Deutschland.</p></div>
+      <div><b>Kein Host</b><p>Wir verkaufen keinen Minecraft-Server. Nur das Panel.</p></div>
+      <div><b>Dein Root</b><p>IP, SSH-User und Passwort — dein VPS bleibt bei dir.</p></div>
       <div><b>Paysafecard</b><p>PIN nur auf der offiziellen Paysafe-Seite.</p></div>
-      <div><b>Support</b><p>Nach dem Login erreichst du uns im Bereich.</p></div>
     </section>
 
     <section id="shop">
-      <h2>Pakete</h2>
-      <p class="sub">Minecraft-Pakete auf unserem Host — oder <b>Panel</b> für deinen eigenen Root-Server.</p>
+      <h2>eyePanel</h2>
+      <p class="sub">Ein Paket: Panel-Lizenz. Danach Root-Server in Mein Bereich anbinden.</p>
       <div class="grid" id="shop-list"></div>
     </section>
 
@@ -82,7 +82,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <script src="config.js?v=11"></script>
-  <script src="app.js?v=11"></script>
+  <script src="config.js?v=12"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>
