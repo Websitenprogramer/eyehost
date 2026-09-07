@@ -390,19 +390,19 @@ body{background:
         <div>
           <div class="lobby-kicker">Dein Bereich</div>
           <h2 id="lobby-title">Willkommen zurück</h2>
-          <div class="tb-sub">Wähle eine Instanz. Danach öffnet sich die richtige Konsole — Dateien, Plugins, Start/Stop.</div>
+          <div class="tb-sub">Hier liegen deine eyePanels. Root-Server verbinden — Minecraft läuft bei dir, nicht auf dem Host-PC.</div>
         </div>
-        <a class="btn btn-p" href="/#shop">Neuen Server kaufen</a>
+        <a class="btn btn-p" href="/#shop">Neues Panel kaufen</a>
       </div>
       <div class="home-kpis">
-        <div class="sc"><div class="sc-lbl">Server</div><div class="sc-val b" id="kpi-n">0</div><div class="sc-badge b">auf deinem Account</div></div>
-        <div class="sc"><div class="sc-lbl">Online</div><div class="sc-val g" id="kpi-on">0</div><div class="sc-badge g">gerade aktiv</div></div>
-        <div class="sc"><div class="sc-lbl">Standort</div><div class="sc-val" style="font-size:18px">Deutschland</div><div class="sc-badge b">niedrige Latenz</div></div>
+        <div class="sc"><div class="sc-lbl">Panels</div><div class="sc-val b" id="kpi-n">0</div><div class="sc-badge b">auf deinem Account</div></div>
+        <div class="sc"><div class="sc-lbl">Verbunden</div><div class="sc-val g" id="kpi-on">0</div><div class="sc-badge g">Root erreichbar</div></div>
+        <div class="sc"><div class="sc-lbl">Last</div><div class="sc-val" style="font-size:18px">Dein VPS</div><div class="sc-badge b">nicht der Host-PC</div></div>
       </div>
       <div class="home-head" style="margin-top:4px">
         <div>
-          <div class="tb-title" style="font-size:18px">Deine Instanzen</div>
-          <div class="tb-sub">Klick auf eine Karte, um ins Panel zu gehen.</div>
+          <div class="tb-title" style="font-size:18px">Deine Panels</div>
+          <div class="tb-sub">Root verbinden oder Panel öffnen.</div>
         </div>
       </div>
       <div class="srv-grid" id="srv-list"></div>
@@ -461,12 +461,31 @@ body{background:
         <button class="btn btn-p" style="margin-top:12px" onclick="saveAdminPay()">Zahlung speichern</button>
       </div>
       <div class="admin-box">
-        <div class="tb-title" style="font-size:15px">Server erstellen</div>
-        <div class="tb-sub">Nur für dich. Danach kannst du ihn löschen. Optional direkt an Username oder E-Mail geben.</div>
+        <div class="tb-title" style="font-size:15px">Panel vergeben (sofort)</div>
+        <div class="tb-sub">Gibt jemandem eyePanel. Kein Minecraft auf deinem PC — der Kunde verbindet seinen eigenen Root-Server.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
-          <input class="inp" id="new-srv" placeholder="Servername" style="margin:0;width:200px"/>
-          <input class="inp" id="new-srv-email" placeholder="Username oder E-Mail zum Vergeben (optional)" style="margin:0;width:280px"/>
-          <button class="btn btn-p" onclick="createServer()">Erstellen</button>
+          <input class="inp" id="new-srv" placeholder="Panel-Name" style="margin:0;width:200px"/>
+          <input class="inp" id="new-srv-email" placeholder="Username (Pflicht zum Vergeben)" style="margin:0;width:280px"/>
+          <button class="btn btn-p" onclick="createPanelLicense()">Panel geben</button>
+        </div>
+      </div>
+      <div class="admin-box">
+        <div class="tb-title" style="font-size:15px">Alle Accounts</div>
+        <div class="tb-sub">Globale Konten anlegen oder Passwort ändern. Nicht in der Server-Konsole.</div>
+        <div class="add-user-form" style="grid-template-columns:1fr 1fr 1fr 1fr auto;margin-top:12px">
+          <div class="field" style="margin:0"><label>Benutzername</label><input type="text" id="nu-name" placeholder="spieler123"/></div>
+          <div class="field" style="margin:0"><label>E-Mail (optional)</label><input type="email" id="nu-email" placeholder="mail@…"/></div>
+          <div class="field" style="margin:0"><label>Passwort</label><input type="password" id="nu-pass" placeholder="passwort"/></div>
+          <div class="field" style="margin:0"><label>Rolle</label>
+            <select id="nu-role"><option value="user">User</option><option value="admin">Admin</option></select>
+          </div>
+          <button class="btn btn-p" style="margin-top:17px" onclick="createUser()">Erstellen</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden;margin-top:14px">
+          <table class="user-table">
+            <thead><tr><th>Benutzername</th><th>E-Mail</th><th>Rolle</th><th>Erstellt</th><th>Passwort</th><th></th></tr></thead>
+            <tbody id="user-list"></tbody>
+          </table>
         </div>
       </div>
       <div class="admin-box">
@@ -536,10 +555,6 @@ body{background:
       </button>
       <button class="ni" onclick="go('settings',this)">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35C8.66 5.59 8.12 5.92 7.63 6.29L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.22-.07.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Einstellungen
-      </button>
-      <div class="sb-section admin-only">Host</div>
-      <button class="ni admin-only" onclick="go('gusers',this)">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Alle Accounts
       </button>
     </div>
     <div class="sb-footer">
@@ -749,7 +764,7 @@ body{background:
         <div style="padding:20px 24px">
           <div class="card" style="margin-bottom:14px" id="team-add-box">
             <div class="card-title">Zum Server hinzufügen</div>
-            <div class="tb-sub" style="margin-bottom:10px">Die Person braucht schon ein Eye-Panel-Konto. Danach sieht sie diesen Server und darf je nach Rolle arbeiten.</div>
+            <div class="tb-sub" style="margin-bottom:10px">Die Person braucht schon ein Konto. Danach sieht sie diesen Server und darf je nach Rolle arbeiten.</div>
             <div class="add-user-form" style="grid-template-columns:1.4fr 1fr auto">
               <div class="field" style="margin:0"><label>Username</label><input type="text" id="tm-name" placeholder="z.B. noah"/></div>
               <div class="field" style="margin:0"><label>Rechte</label>
@@ -771,56 +786,10 @@ body{background:
         </div>
       </div>
 
-      <!-- GLOBALE ACCOUNTS (nur Host-Admin) -->
-      <div class="page" id="page-gusers">
-        <div class="topbar"><div><div class="tb-title">Alle Accounts</div><div class="tb-sub">Globale Eye-Panel-Konten (Host)</div></div></div>
-        <div style="padding:20px 24px">
-          <div class="card" style="margin-bottom:14px">
-            <div class="card-title">Neuen Account erstellen</div>
-            <div class="add-user-form" style="grid-template-columns:1fr 1fr 1fr 1fr auto">
-              <div class="field" style="margin:0"><label>Benutzername</label><input type="text" id="nu-name" placeholder="spieler123"/></div>
-              <div class="field" style="margin:0"><label>E-Mail (optional)</label><input type="email" id="nu-email" placeholder="mail@…"/></div>
-              <div class="field" style="margin:0"><label>Passwort</label><input type="password" id="nu-pass" placeholder="passwort"/></div>
-              <div class="field" style="margin:0"><label>Rolle</label>
-                <select id="nu-role"><option value="user">User</option><option value="admin">Admin</option></select>
-              </div>
-              <button class="btn btn-p" style="margin-top:17px" onclick="createUser()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Erstellen</button>
-            </div>
-          </div>
-          <div class="card" style="padding:0;overflow:hidden">
-            <table class="user-table">
-              <thead><tr><th>Benutzername</th><th>E-Mail</th><th>Rolle</th><th>Erstellt</th><th>Passwort ändern</th><th></th></tr></thead>
-              <tbody id="user-list"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
       <!-- EINSTELLUNGEN -->
       <div class="page" id="page-settings">
         <div class="topbar"><div><div class="tb-title">Einstellungen</div><div class="tb-sub">Schnellbefehle & Aktionen</div></div></div>
         <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
-          <div class="card admin-only">
-            <div class="card-title">Panel / Java</div>
-            <div class="set-grid">
-              <div class="field"><label>Minecraft-Ordner</label><input type="text" id="set-dir"/></div>
-              <div class="field"><label>JAR (auto oder Dateiname)</label><input type="text" id="set-jar" placeholder="auto"/></div>
-              <div class="field"><label>Java-Args</label><input type="text" id="set-args" placeholder="-Xmx2G -Xms1G"/></div>
-              <div class="field"><label>Java.exe Pfad</label><input type="text" id="set-java" placeholder="auto"/></div>
-            </div>
-            <div class="card-title" style="margin-top:18px">Paysafecard (echte Zahlung)</div>
-            <div class="tb-sub" style="margin-bottom:10px">Keys nur vom Paysafe Business Portal. PIN wird nie im Panel eingegeben.</div>
-            <div class="set-grid">
-              <div class="field"><label>Öffentliche Panel-URL</label><input type="text" id="set-pub" placeholder="https://deine-domain.de"/></div>
-              <div class="field"><label>Umgebung</label>
-                <select id="set-psc-env"><option value="test">Test</option><option value="live">Live</option></select>
-              </div>
-              <div class="field"><label>API Username</label><input type="text" id="set-psc-user" autocomplete="off"/></div>
-              <div class="field"><label>API Key</label><input type="password" id="set-psc-key" placeholder="leer = unverändert" autocomplete="off"/></div>
-              <div class="field"><label>Account ID</label><input type="text" id="set-psc-acc" autocomplete="off"/></div>
-            </div>
-            <button class="btn btn-p btn-sm" onclick="savePanelSettings()">Einstellungen speichern</button>
-          </div>
           <div class="card">
             <div class="card-title">Schnellbefehle</div>
             <div class="quickbtns">
@@ -1026,7 +995,7 @@ function homeTab(name, btn) {
   const panel = $('htab-'+name);
   if (panel) panel.classList.add('on');
   if (name === 'support' || name === 'admin') loadTickets();
-  if (name === 'admin') loadAdminPay();
+  if (name === 'admin') { loadAdminPay(); loadUsers(); }
 }
 
 let tkWatch = null;
@@ -1087,8 +1056,8 @@ async function showHome() {
   homeTab(currentHomeTab);
   if ($('home-hello')) $('home-hello').textContent = meName || 'Account';
   if ($('lobby-title')) $('lobby-title').textContent = meName ? ('Hey, ' + meName) : 'Willkommen zurück';
-  const [r, shop, tix, ords] = await Promise.all([
-    api('/api/servers'),
+  const [nodes, shop, tix, ords] = await Promise.all([
+    api('/api/nodes'),
     api('/api/shop'),
     api('/api/tickets'),
     api('/api/orders'),
@@ -1100,43 +1069,42 @@ async function showHome() {
   renderTickets(tix.ok ? tix.tickets : []);
   renderOrders(ords.ok ? ords.orders : []);
   const box = $('srv-list');
-  const list = r.ok ? r.servers : [];
+  const list = nodes.ok ? (nodes.nodes || []) : [];
   if ($('kpi-n')) $('kpi-n').textContent = list.length;
-  if ($('kpi-on')) $('kpi-on').textContent = list.filter(s => s.running).length;
-  if (!r.ok) { box.innerHTML = `<div class="empty">${r.msg||'Fehler'}</div>`; return; }
+  if ($('kpi-on')) $('kpi-on').textContent = list.filter(n => n.connected).length;
+  if (!nodes.ok) { box.innerHTML = `<div class="empty">${nodes.msg||'Fehler'}</div>`; return; }
   if (!list.length) {
-    box.innerHTML = '<div class="empty"><div class="lobby-kicker">Noch leer</div><div class="tb-title" style="font-size:22px;margin:8px 0 6px">Kein Server auf dem Account</div>Kauf ein Paket auf der Website. Danach liegt die Instanz hier und du öffnest die Konsole.<br><a class="btn btn-p" href="/#shop" style="margin-top:16px">Zum Shop</a></div>';
+    box.innerHTML = '<div class="empty"><div class="lobby-kicker">Noch leer</div><div class="tb-title" style="font-size:22px;margin:8px 0 6px">Kein Panel</div>Kauf eyePanel im Shop oder lass dir eins vom Host geben. Danach verbindest du deinen Root-Server — ohne Last auf dem Host-PC.<br><a class="btn btn-p" href="/#shop" style="margin-top:16px">Neues Panel kaufen</a></div>';
     return;
   }
-  box.innerHTML = list.map(s => {
-    const canAssign = role === 'admin' && !s.locked;
-    return `
-    <div class="srv-card ${s.running?'live':''}">
+  box.innerHTML = list.map(n => `
+    <div class="srv-card ${n.connected?'live':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
-        <div style="display:flex;gap:12px;align-items:center;min-width:0">
-          ${srvAvatarHtml(s)}
-          <div style="min-width:0">
-            <div class="pcard-name" style="font-size:20px;letter-spacing:-.03em">${esc(s.name)}</div>
-            <div style="color:var(--t3);font-size:12px;margin-top:3px">${esc(s.owner||meName||'Dein Server')}</div>
-          </div>
+        <div style="min-width:0">
+          <div class="pcard-name" style="font-size:20px;letter-spacing:-.03em">${esc(n.name)}</div>
+          <div style="color:var(--t3);font-size:12px;margin-top:3px">${esc(n.host ? (n.sshUser+'@'+n.host+':'+n.sshPort) : 'Root noch nicht verbunden')}</div>
         </div>
-        <div class="pill ${s.running?'on':'off'}"><div class="pdot ${s.running?'pulse':''}"></div>${s.running?'Online':'Offline'}</div>
+        <div class="pill ${n.connected?'on':'off'}"><div class="pdot ${n.connected?'pulse':''}"></div>${n.connected?'Verbunden':'Offen'}</div>
       </div>
+      ${n.lastMsg?`<div style="color:var(--t2);font-size:12px">${esc(n.lastMsg)}</div>`:''}
       <div class="srv-chips">
-        <span class="chip">Paper</span>
-        <span class="chip">${esc(s.loc||'Deutschland')}</span>
-        <span class="chip">Port ${esc(s.port)}</span>
-        ${s.ram?`<span class="chip">${esc(s.ram)} RAM</span>`:''}
-        ${s.plan?`<span class="chip">Paket ${esc(s.plan)}</span>`:''}
-        ${expText(s)?`<span class="chip">${esc(expText(s).replace(/^ · /,''))}</span>`:''}
+        <span class="chip">eyePanel</span>
+        <span class="chip">${esc(n.owner||meName||'')}</span>
+        ${n.expiresAt?`<span class="chip">bis ${new Date(n.expiresAt).toLocaleDateString('de-DE')}</span>`:''}
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto">
-        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="openServer('${s.id}','${esc(s.name)}',${s.avatar?true:false},${!!(s.mine||s.canManageTeam)},${!!s.canManageTeam})">Panel öffnen</button>
-        ${canAssign?`<button class="btn btn-n btn-sm" onclick="assignServer('${s.id}')">Vergeben</button>`:''}
-        ${s.canDelete?`<button class="btn btn-r btn-sm del-ghost" onclick="deleteServer('${s.id}','${esc(s.name)}')">Löschen</button>`:''}
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+        <input class="inp" id="ph-${n.id}" placeholder="IP / Domain vom Root" value="${esc(n.host||'')}" style="margin:0"/>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input class="inp" id="pp-${n.id}" placeholder="SSH-Port" value="${esc(n.sshPort||22)}" style="margin:0;width:90px"/>
+          <input class="inp" id="pu-${n.id}" placeholder="User" value="${esc(n.sshUser||'root')}" style="margin:0;flex:1"/>
+          <input class="inp" id="pw-${n.id}" type="password" placeholder="${n.hasPass?'Passwort (optional neu)':'SSH-Passwort'}" style="margin:0;flex:1"/>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-p" style="flex:1" onclick="connectPanelNode('${n.id}')">Root verbinden</button>
+          ${n.canDelete?`<button class="btn btn-r btn-sm del-ghost" onclick="deletePanelNode('${n.id}','${esc(n.name)}')">Löschen</button>`:''}
+        </div>
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 }
 let shopCache = [];
 let paysafeOn = false;
@@ -1412,21 +1380,46 @@ async function sendTicket() {
     await loadTickets();
   }
 }
-async function createServer() {
-  const name = $('new-srv').value.trim();
-  const email = $('new-srv-email').value.trim();
-  const r = await api('/api/servers','POST',{name, email, username: email});
-  if (r.ok && r.warn) toast('⚠️ Server erstellt, Vergabe: '+r.warn, 'err');
-  else toast(r.ok?(email?'✅ Server erstellt und an '+(r.givenTo||email)+' vergeben':'✅ Server erstellt'):'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+async function createPanelLicense() {
+  const name = $('new-srv').value.trim() || 'eyePanel';
+  const who = $('new-srv-email').value.trim();
+  if (!who) { toast('Username fehlt', 'err'); return; }
+  const old = serverId; serverId = '';
+  const r = await api('/api/nodes','POST',{ name, username: who, email: who, days: 30 });
+  serverId = old;
+  toast(r.ok ? ('✅ Panel an '+(r.givenTo||who)+' vergeben — kein Load auf deinem PC') : ('❌ '+(r.msg||'Fehler')), r.ok?'ok':'err');
   if (r.ok) { $('new-srv').value=''; $('new-srv-email').value=''; showHome(); }
 }
+async function connectPanelNode(id) {
+  const old = serverId; serverId = '';
+  const r = await api('/api/nodes/'+id+'/connect','POST',{
+    host: ($('ph-'+id)||{}).value,
+    port: ($('pp-'+id)||{}).value,
+    user: ($('pu-'+id)||{}).value,
+    password: ($('pw-'+id)||{}).value,
+  });
+  serverId = old;
+  toast(r.ok ? (r.msg || 'Gespeichert') : ('❌ '+(r.msg||'Fehler')), r.ok?(r.reachable?'ok':'err'):'err');
+  if (r.ok) showHome();
+}
+async function deletePanelNode(id, name) {
+  if (!confirm('"'+name+'" Panel löschen?')) return;
+  const old = serverId; serverId = '';
+  const r = await api('/api/nodes/'+id,'DELETE');
+  serverId = old;
+  toast(r.ok?'Panel gelöscht':'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) showHome();
+}
+async function createServer() {
+  return createPanelLicense();
+}
 async function assignServer(id) {
-  const who = prompt('An wen vergeben? Username oder E-Mail. Die Person muss schon registriert sein.');
+  const who = prompt('An wen vergeben? Username. Die Person muss schon registriert sein.');
   if (!who) return;
   const old = serverId; serverId = '';
   const r = await api('/api/servers/'+id+'/assign','POST',{email:who.trim(), username:who.trim()});
   serverId = old;
-  toast(r.ok?('📨 Server an '+(r.givenTo||who.trim())+' übergeben'):'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  toast(r.ok?('📨 An '+(r.givenTo||who.trim())+' übergeben'):'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
   if (r.ok) showHome();
 }
 function openServer(id, name, hasAva, mine, canTeam) {
@@ -1463,7 +1456,6 @@ function go(page, btn) {
   if (btn) btn.classList.add('on');
   if (page === 'files') loadFiles('');
   if (page === 'users') loadTeam();
-  if (page === 'gusers') loadUsers();
   if (page === 'serverconf') loadProps();
   if (page === 'plugins') { loadInstalledPlugins(); searchPlugins(1); }
   if (page === 'backups') loadBackups();

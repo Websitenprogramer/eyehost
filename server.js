@@ -599,7 +599,8 @@ function createGameServer(user, name, extra = {}) {
   return { ok: true, server: publicServer(rec, user) };
 }
 
-function publicNode(n) {
+function publicNode(n, user) {
+  const owner = DB.users.find((u) => u.id === n.ownerId);
   return {
     id: n.id,
     name: n.name || 'eyePanel',
@@ -613,6 +614,10 @@ function publicNode(n) {
     lastCheck: n.lastCheck || null,
     expiresAt: n.expiresAt || null,
     createdAt: n.createdAt,
+    owner: owner?.username || '?',
+    ownerId: n.ownerId,
+    mine: !!(user && n.ownerId === user.id),
+    canDelete: !!(user && (user.role === 'admin' || n.ownerId === user.id)),
   };
 }
 
@@ -640,7 +645,7 @@ function createPanelLicense(user, extra = {}) {
   };
   DB.nodes.push(rec);
   saveDB();
-  return { ok: true, node: publicNode(rec) };
+  return { ok: true, node: publicNode(rec, user) };
 }
 
 function validRemoteHost(host) {
@@ -1780,8 +1785,23 @@ const server = http.createServer(async (req, res) => {
     return json(res, assignToAccount(rec, b.email || b.username, user));
   }
   if (p === '/api/nodes' && req.method === 'GET') {
-    const list = (DB.nodes || []).filter((n) => canUseNode(user, n)).map(publicNode);
+    const list = (DB.nodes || []).filter((n) => canUseNode(user, n)).map((n) => publicNode(n, user));
     return json(res, { ok: true, nodes: list });
+  }
+  if (p === '/api/nodes' && req.method === 'POST') {
+    if (user.role !== 'admin') return json(res, { ok: false, msg: 'Nur der Host kann Panels vergeben.' }, 403);
+    const b = await parseBody(req);
+    const who = String(b.username || b.email || '').trim();
+    if (!who) return json(res, { ok: false, msg: 'Username fehlt — an wen soll das Panel?' }, 400);
+    const target = findUserByLogin(who) || findUserByEmail(who);
+    if (!target) return json(res, { ok: false, msg: 'Kein Konto mit diesem Username. Die Person muss sich erst registrieren.' }, 404);
+    const made = createPanelLicense(target, {
+      planId: 'panel',
+      days: b.days || 30,
+      name: b.name || 'eyePanel',
+    });
+    if (!made.ok) return json(res, made, 400);
+    return json(res, { ok: true, node: made.node, givenTo: target.username });
   }
   if (p.startsWith('/api/nodes/') && p.endsWith('/connect') && req.method === 'POST') {
     const rec = (DB.nodes || []).find((n) => n.id === p.split('/')[3]);
@@ -1808,7 +1828,7 @@ const server = http.createServer(async (req, res) => {
       ? 'Root-Server erreichbar. Panel ist verbunden.'
       : ('Gespeichert, aber SSH nicht erreichbar: ' + (probe.msg || 'Timeout'));
     saveDB();
-    return json(res, { ok: true, node: publicNode(rec), reachable: probe.ok, msg: rec.lastMsg });
+    return json(res, { ok: true, node: publicNode(rec, user), reachable: probe.ok, msg: rec.lastMsg });
   }
   if (p.startsWith('/api/nodes/') && req.method === 'DELETE') {
     const id = p.split('/')[3];
