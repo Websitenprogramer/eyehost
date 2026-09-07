@@ -418,12 +418,76 @@ function canUseServer(user, server) {
   if (!user || !server) return false;
   if (user.role === 'admin') return true;
   if (server.ownerId === user.id) return true;
+  ensureMembers(server);
+  if ((server.members || []).some((m) => m.userId === user.id)) return true;
   return (server.sharedWith || []).includes(user.id);
 }
 
 function isOwner(user, server) {
   if (!user || !server) return false;
   return user.role === 'admin' || server.ownerId === user.id;
+}
+
+const TEAM_ROLES = {
+  admin: {
+    label: 'Admin',
+    perms: ['console', 'files', 'plugins', 'backups', 'power', 'config', 'team'],
+  },
+  mod: {
+    label: 'Techniker',
+    perms: ['console', 'files', 'plugins', 'backups', 'power', 'config'],
+  },
+  helper: {
+    label: 'Helfer',
+    perms: ['console', 'files'],
+  },
+};
+
+function ensureMembers(server) {
+  if (!server) return;
+  if (!Array.isArray(server.members)) server.members = [];
+  const have = new Set(server.members.map((m) => m.userId));
+  for (const id of server.sharedWith || []) {
+    if (!have.has(id) && id !== server.ownerId) {
+      server.members.push({
+        userId: id,
+        role: 'helper',
+        addedAt: new Date().toISOString(),
+      });
+      have.add(id);
+    }
+  }
+  server.sharedWith = server.members.map((m) => m.userId);
+}
+
+function getServerRole(user, server) {
+  if (!user || !server) return null;
+  if (user.role === 'admin' || server.ownerId === user.id) return 'owner';
+  ensureMembers(server);
+  const m = (server.members || []).find((x) => x.userId === user.id);
+  return m ? m.role : null;
+}
+
+function hasServerPerm(user, server, perm) {
+  const role = getServerRole(user, server);
+  if (!role) return false;
+  if (role === 'owner') return true;
+  const def = TEAM_ROLES[role];
+  return !!(def && def.perms.includes(perm));
+}
+
+function publicMember(m) {
+  const u = DB.users.find((x) => x.id === m.userId);
+  const def = TEAM_ROLES[m.role] || TEAM_ROLES.helper;
+  return {
+    userId: m.userId,
+    username: u?.username || '?',
+    email: u?.email || '',
+    role: m.role,
+    roleLabel: def.label,
+    perms: def.perms.slice(),
+    addedAt: m.addedAt || null,
+  };
 }
 
 function usernameOf(id) {
@@ -451,6 +515,8 @@ function hasAvatar(rec) {
 function publicServer(s, user) {
   const i = INST.get(s.id);
   const owner = DB.users.find((u) => u.id === s.ownerId);
+  ensureMembers(s);
+  const myRole = getServerRole(user, s);
   return {
     id: s.id,
     name: s.name,
@@ -459,16 +525,19 @@ function publicServer(s, user) {
     owner: owner?.username || '?',
     ownerEmail: owner?.email || '',
     mine: s.ownerId === user.id,
-    gifted: (s.sharedWith || []).includes(user.id),
+    gifted: myRole && myRole !== 'owner',
     locked: !!s.locked || s.id === 'main',
     plan: s.planId || null,
     ram: s.ram || '',
     avatar: hasAvatar(s),
     avatarAt: s.avatarAt || 0,
     expiresAt: s.expiresAt || null,
-    sharedWith: (s.sharedWith || []).map((id) => {
-      const u = DB.users.find((x) => x.id === id);
-      return u ? u.email || u.username : '?';
+    myRole: myRole || null,
+    canManageTeam: hasServerPerm(user, s, 'team'),
+    members: (s.members || []).map(publicMember),
+    sharedWith: (s.members || []).map((m) => {
+      const u = DB.users.find((x) => x.id === m.userId);
+      return u ? u.username : '?';
     }),
     running: !!(i && i.process && !i.process.killed),
     canDelete: !!user && !s.locked && s.id !== 'main' && (user.role === 'admin' || s.ownerId === user.id),
@@ -518,6 +587,7 @@ function createGameServer(user, name, extra = {}) {
     port,
     ownerId: user.id,
     sharedWith: [],
+    members: [],
     locked: false,
     planId: extra.planId || null,
     ram,
@@ -639,11 +709,16 @@ function assignToAccount(rec, query, actor) {
   if (!target) {
     return { ok: false, msg: 'Kein Konto mit diesem Username oder dieser E-Mail. Die Person muss sich erst registrieren.' };
   }
+  ensureMembers(rec);
+  const prevOwner = rec.ownerId;
   rec.ownerId = target.id;
-  rec.sharedWith = (rec.sharedWith || []).filter((id) => id !== target.id);
-  if (actor && actor.id !== target.id && !(rec.sharedWith || []).includes(actor.id) && actor.role !== 'admin') {
-    rec.sharedWith.push(actor.id);
+  rec.members = (rec.members || []).filter((m) => m.userId !== target.id);
+  if (actor && actor.id !== target.id && actor.role !== 'admin' && actor.id === prevOwner) {
+    if (!(rec.members || []).some((m) => m.userId === actor.id)) {
+      rec.members.push({ userId: actor.id, role: 'admin', addedAt: new Date().toISOString() });
+    }
   }
+  rec.sharedWith = (rec.members || []).map((m) => m.userId);
   saveDB();
   return { ok: true, server: publicServer(rec, actor), givenTo: target.username };
 }
@@ -1766,8 +1841,66 @@ const server = http.createServer(async (req, res) => {
 });
 
 async function routeServer(req, res, url, p, user) {
+  const serverRec = als.getStore()?.server || null;
+
+  if (p === '/api/team' && req.method === 'GET') {
+    ensureMembers(serverRec);
+    const owner = DB.users.find((u) => u.id === serverRec.ownerId);
+    return json(res, {
+      ok: true,
+      myRole: getServerRole(user, serverRec),
+      canManage: hasServerPerm(user, serverRec, 'team'),
+      roles: Object.entries(TEAM_ROLES).map(([id, r]) => ({ id, label: r.label, perms: r.perms })),
+      owner: owner ? { userId: owner.id, username: owner.username, role: 'owner', roleLabel: 'Besitzer' } : null,
+      members: (serverRec.members || []).map(publicMember),
+    });
+  }
+  if (p === '/api/team' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'team')) return json(res, { ok: false, msg: 'Kein Recht, Team zu verwalten.' }, 403);
+    const b = await parseBody(req);
+    const who = String(b.username || b.email || '').trim();
+    const role = String(b.role || 'helper');
+    if (!TEAM_ROLES[role]) return json(res, { ok: false, msg: 'Ungültige Rolle.' }, 400);
+    const target = findUserByLogin(who) || findUserByEmail(who);
+    if (!target) return json(res, { ok: false, msg: 'Kein Konto mit diesem Username. Die Person muss sich erst registrieren.' }, 404);
+    if (target.id === serverRec.ownerId) return json(res, { ok: false, msg: 'Das ist schon der Besitzer.' }, 400);
+    ensureMembers(serverRec);
+    const existing = serverRec.members.find((m) => m.userId === target.id);
+    if (existing) {
+      existing.role = role;
+    } else {
+      serverRec.members.push({ userId: target.id, role, addedAt: new Date().toISOString() });
+    }
+    serverRec.sharedWith = serverRec.members.map((m) => m.userId);
+    saveDB();
+    return json(res, { ok: true, members: serverRec.members.map(publicMember) });
+  }
+  if (p.startsWith('/api/team/') && req.method === 'PUT') {
+    if (!hasServerPerm(user, serverRec, 'team')) return json(res, { ok: false, msg: 'Kein Recht, Team zu verwalten.' }, 403);
+    const uid = p.split('/')[3];
+    const b = await parseBody(req);
+    const role = String(b.role || '');
+    if (!TEAM_ROLES[role]) return json(res, { ok: false, msg: 'Ungültige Rolle.' }, 400);
+    ensureMembers(serverRec);
+    const m = serverRec.members.find((x) => x.userId === uid);
+    if (!m) return json(res, { ok: false, msg: 'Mitglied nicht gefunden.' }, 404);
+    m.role = role;
+    saveDB();
+    return json(res, { ok: true, members: serverRec.members.map(publicMember) });
+  }
+  if (p.startsWith('/api/team/') && req.method === 'DELETE') {
+    if (!hasServerPerm(user, serverRec, 'team')) return json(res, { ok: false, msg: 'Kein Recht, Team zu verwalten.' }, 403);
+    const uid = p.split('/')[3];
+    ensureMembers(serverRec);
+    serverRec.members = serverRec.members.filter((m) => m.userId !== uid);
+    serverRec.sharedWith = serverRec.members.map((m) => m.userId);
+    saveDB();
+    return json(res, { ok: true, members: serverRec.members.map(publicMember) });
+  }
+
   if (p === '/api/status') return json(res, getStatus());
   if (p === '/api/console') {
+    if (!hasServerPerm(user, serverRec, 'console')) return json(res, { ok: false, msg: 'Kein Konsolen-Zugriff.' }, 403);
     pullLatestLog();
     const st = instNow();
     const since = parseInt(url.searchParams.get('since') || '0', 10);
@@ -1775,10 +1908,20 @@ async function routeServer(req, res, url, p, user) {
   }
   if (p === '/api/modlog/stats') return json(res, getModlogStats());
 
-  if (p === '/api/start' && req.method === 'POST') return json(res, startMC());
-  if (p === '/api/stop' && req.method === 'POST') return stopMC().then((r) => json(res, r));
-  if (p === '/api/restart' && req.method === 'POST') return restartMC().then((r) => json(res, r));
+  if (p === '/api/start' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'power')) return json(res, { ok: false, msg: 'Kein Start-Recht.' }, 403);
+    return json(res, startMC());
+  }
+  if (p === '/api/stop' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'power')) return json(res, { ok: false, msg: 'Kein Stop-Recht.' }, 403);
+    return stopMC().then((r) => json(res, r));
+  }
+  if (p === '/api/restart' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'power')) return json(res, { ok: false, msg: 'Kein Restart-Recht.' }, 403);
+    return restartMC().then((r) => json(res, r));
+  }
   if (p === '/api/command' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'console')) return json(res, { ok: false, msg: 'Kein Konsolen-Recht.' }, 403);
     return parseBody(req).then((b) => json(res, sendCmd(b.cmd || '')));
   }
 
@@ -1818,23 +1961,36 @@ async function routeServer(req, res, url, p, user) {
     });
   }
 
-  if (p === '/api/serverprops' && req.method === 'GET') return json(res, { ok: true, props: readProps() });
+  if (p === '/api/serverprops' && req.method === 'GET') {
+    if (!hasServerPerm(user, serverRec, 'config')) return json(res, { ok: false, msg: 'Kein Config-Recht.' }, 403);
+    return json(res, { ok: true, props: readProps() });
+  }
   if (p === '/api/serverprops' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'config')) return json(res, { ok: false, msg: 'Kein Config-Recht.' }, 403);
     const b = await parseBody(req);
     return json(res, writeProps(b.props || {}));
   }
 
-  if (p === '/api/files') return json(res, listFiles(url.searchParams.get('dir') || ''));
-  if (p === '/api/file' && req.method === 'GET') return json(res, readFileSafe(url.searchParams.get('path') || ''));
+  if (p === '/api/files') {
+    if (!hasServerPerm(user, serverRec, 'files')) return json(res, { ok: false, msg: 'Kein Datei-Recht.' }, 403);
+    return json(res, listFiles(url.searchParams.get('dir') || ''));
+  }
+  if (p === '/api/file' && req.method === 'GET') {
+    if (!hasServerPerm(user, serverRec, 'files')) return json(res, { ok: false, msg: 'Kein Datei-Recht.' }, 403);
+    return json(res, readFileSafe(url.searchParams.get('path') || ''));
+  }
   if (p === '/api/file' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'files')) return json(res, { ok: false, msg: 'Kein Datei-Recht.' }, 403);
     const b = await parseBody(req);
     return json(res, writeFileSafe(b.path, b.content));
   }
   if (p === '/api/file' && req.method === 'DELETE') {
+    if (!hasServerPerm(user, serverRec, 'files')) return json(res, { ok: false, msg: 'Kein Datei-Recht.' }, 403);
     const b = await parseBody(req);
     return json(res, deleteEntry(b.path));
   }
   if (p === '/api/upload' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'files')) return json(res, { ok: false, msg: 'Kein Datei-Recht.' }, 403);
     try {
       const buf = await readRawBody(req);
       const dir = url.searchParams.get('dir') || '';
@@ -1845,24 +2001,37 @@ async function routeServer(req, res, url, p, user) {
     }
   }
 
-  if (p === '/api/plugins/installed' && req.method === 'GET') return json(res, listInstalledPlugins());
+  if (p === '/api/plugins/installed' && req.method === 'GET') {
+    if (!hasServerPerm(user, serverRec, 'plugins')) return json(res, { ok: false, msg: 'Kein Plugin-Recht.' }, 403);
+    return json(res, listInstalledPlugins());
+  }
   if (p === '/api/plugins/installed' && req.method === 'DELETE') {
+    if (!hasServerPerm(user, serverRec, 'plugins')) return json(res, { ok: false, msg: 'Kein Plugin-Recht.' }, 403);
     const b = await parseBody(req);
     return json(res, deletePlugin(b.name));
   }
   if (p === '/api/plugins/search' || p === '/api/plugins/catalog') {
+    if (!hasServerPerm(user, serverRec, 'plugins')) return json(res, { ok: false, msg: 'Kein Plugin-Recht.' }, 403);
     const q = url.searchParams.get('q') || '';
     const page = url.searchParams.get('page') || '1';
     return json(res, await spigetCatalog(q, page));
   }
   if (p === '/api/plugins/install' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'plugins')) return json(res, { ok: false, msg: 'Kein Plugin-Recht.' }, 403);
     const b = await parseBody(req);
     return json(res, await downloadPlugin(b.id, b.name));
   }
 
-  if (p === '/api/backups' && req.method === 'GET') return json(res, listBackups());
-  if (p === '/api/backups' && req.method === 'POST') return json(res, await createBackup());
+  if (p === '/api/backups' && req.method === 'GET') {
+    if (!hasServerPerm(user, serverRec, 'backups')) return json(res, { ok: false, msg: 'Kein Backup-Recht.' }, 403);
+    return json(res, listBackups());
+  }
+  if (p === '/api/backups' && req.method === 'POST') {
+    if (!hasServerPerm(user, serverRec, 'backups')) return json(res, { ok: false, msg: 'Kein Backup-Recht.' }, 403);
+    return json(res, await createBackup());
+  }
   if (p === '/api/backups' && req.method === 'DELETE') {
+    if (!hasServerPerm(user, serverRec, 'backups')) return json(res, { ok: false, msg: 'Kein Backup-Recht.' }, 403);
     const b = await parseBody(req);
     return json(res, deleteBackup(b.name));
   }
@@ -1886,11 +2055,11 @@ async function routeServer(req, res, url, p, user) {
     const b = await parseBody(req);
     if (!b.username || !b.password) return json(res, { ok: false, msg: 'Username und Passwort erforderlich.' });
     const email = String(b.email || '').trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(res, { ok: false, msg: 'E-Mail fehlt oder ungültig.' }, 400);
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(res, { ok: false, msg: 'E-Mail ungültig.' }, 400);
     if (DB.users.find((u) => u.username.toLowerCase() === String(b.username).toLowerCase())) {
       return json(res, { ok: false, msg: 'Benutzername bereits vergeben.' });
     }
-    if (findUserByEmail(email)) return json(res, { ok: false, msg: 'E-Mail schon registriert.' }, 400);
+    if (email && findUserByEmail(email)) return json(res, { ok: false, msg: 'E-Mail schon registriert.' }, 400);
     const created = {
       id: crypto.randomBytes(8).toString('hex'),
       username: String(b.username).trim(),

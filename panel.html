@@ -530,12 +530,16 @@ body{background:
       <button class="ni" onclick="go('serverconf',this)">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3 1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>Server-Config
       </button>
-      <div class="sb-section admin-only">Admin</div>
-      <button class="ni admin-only" onclick="go('users',this)">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Benutzer
+      <div class="sb-section owner-only">Team</div>
+      <button class="ni owner-only" onclick="go('users',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Benutzer & Rechte
       </button>
-      <button class="ni admin-only" onclick="go('settings',this)">
+      <button class="ni" onclick="go('settings',this)">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35C8.66 5.59 8.12 5.92 7.63 6.29L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.22-.07.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Einstellungen
+      </button>
+      <div class="sb-section admin-only">Host</div>
+      <button class="ni admin-only" onclick="go('gusers',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Alle Accounts
       </button>
     </div>
     <div class="sb-footer">
@@ -739,15 +743,43 @@ body{background:
         </div>
       </div>
 
-      <!-- BENUTZER -->
+      <!-- TEAM / BENUTZER -->
       <div class="page" id="page-users">
-        <div class="topbar"><div><div class="tb-title">Benutzer</div><div class="tb-sub">Accounts verwalten</div></div></div>
+        <div class="topbar"><div><div class="tb-title">Benutzer & Rechte</div><div class="tb-sub">Leute, die an diesem Server mitarbeiten dürfen</div></div></div>
+        <div style="padding:20px 24px">
+          <div class="card" style="margin-bottom:14px" id="team-add-box">
+            <div class="card-title">Zum Server hinzufügen</div>
+            <div class="tb-sub" style="margin-bottom:10px">Die Person braucht schon ein Eye-Panel-Konto. Danach sieht sie diesen Server und darf je nach Rolle arbeiten.</div>
+            <div class="add-user-form" style="grid-template-columns:1.4fr 1fr auto">
+              <div class="field" style="margin:0"><label>Username</label><input type="text" id="tm-name" placeholder="z.B. noah"/></div>
+              <div class="field" style="margin:0"><label>Rechte</label>
+                <select id="tm-role">
+                  <option value="helper">Helfer — Konsole & Dateien</option>
+                  <option value="mod">Techniker — + Plugins, Backups, Start/Stop</option>
+                  <option value="admin">Admin — alles inkl. Team</option>
+                </select>
+              </div>
+              <button class="btn btn-p" style="margin-top:17px" onclick="addTeamMember()">Hinzufügen</button>
+            </div>
+          </div>
+          <div class="card" style="padding:0;overflow:hidden">
+            <table class="user-table">
+              <thead><tr><th>Benutzer</th><th>Rolle</th><th>Rechte</th><th></th></tr></thead>
+              <tbody id="team-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- GLOBALE ACCOUNTS (nur Host-Admin) -->
+      <div class="page" id="page-gusers">
+        <div class="topbar"><div><div class="tb-title">Alle Accounts</div><div class="tb-sub">Globale Eye-Panel-Konten (Host)</div></div></div>
         <div style="padding:20px 24px">
           <div class="card" style="margin-bottom:14px">
-            <div class="card-title">Neuen Benutzer erstellen</div>
+            <div class="card-title">Neuen Account erstellen</div>
             <div class="add-user-form" style="grid-template-columns:1fr 1fr 1fr 1fr auto">
               <div class="field" style="margin:0"><label>Benutzername</label><input type="text" id="nu-name" placeholder="spieler123"/></div>
-              <div class="field" style="margin:0"><label>E-Mail</label><input type="email" id="nu-email" placeholder="mail@…"/></div>
+              <div class="field" style="margin:0"><label>E-Mail (optional)</label><input type="email" id="nu-email" placeholder="mail@…"/></div>
               <div class="field" style="margin:0"><label>Passwort</label><input type="password" id="nu-pass" placeholder="passwort"/></div>
               <div class="field" style="margin:0"><label>Rolle</label>
                 <select id="nu-role"><option value="user">User</option><option value="admin">Admin</option></select>
@@ -854,6 +886,8 @@ let cSince = 0;
 let curPath = '';
 let curFile = '';
 let avatarTarget = '';
+let srvOwner = false;
+let srvCanTeam = false;
 const EYE_SVG = '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
 function srvAvatarHtml(s, cls) {
   const klass = cls || 'srv-ico';
@@ -969,6 +1003,9 @@ async function tryAutoLogin() {
 function applyRole() {
   document.querySelectorAll('.admin-only').forEach(el => {
     el.style.display = role === 'admin' ? '' : 'none';
+  });
+  document.querySelectorAll('.owner-only').forEach(el => {
+    el.style.display = (role === 'admin' || srvOwner || srvCanTeam) ? '' : 'none';
   });
 }
 
@@ -1094,7 +1131,7 @@ async function showHome() {
         ${expText(s)?`<span class="chip">${esc(expText(s).replace(/^ · /,''))}</span>`:''}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto">
-        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="openServer('${s.id}','${esc(s.name)}',${s.avatar?true:false})">Panel öffnen</button>
+        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="openServer('${s.id}','${esc(s.name)}',${s.avatar?true:false},${!!(s.mine||s.canManageTeam)},${!!s.canManageTeam})">Panel öffnen</button>
         ${canAssign?`<button class="btn btn-n btn-sm" onclick="assignServer('${s.id}')">Vergeben</button>`:''}
         ${s.canDelete?`<button class="btn btn-r btn-sm del-ghost" onclick="deleteServer('${s.id}','${esc(s.name)}')">Löschen</button>`:''}
       </div>
@@ -1392,10 +1429,12 @@ async function assignServer(id) {
   toast(r.ok?('📨 Server an '+(r.givenTo||who.trim())+' übergeben'):'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
   if (r.ok) showHome();
 }
-function openServer(id, name, hasAva) {
+function openServer(id, name, hasAva, mine, canTeam) {
   serverId = id;
   localStorage.setItem('eh3s', id);
   cSince = 0;
+  srvOwner = !!mine || role === 'admin';
+  srvCanTeam = !!canTeam || role === 'admin' || srvOwner;
   $('home').style.display = 'none';
   $('app').style.display = 'flex';
   $('sb-name').textContent = name || 'Server';
@@ -1423,7 +1462,8 @@ function go(page, btn) {
   $('page-'+page).classList.add('on');
   if (btn) btn.classList.add('on');
   if (page === 'files') loadFiles('');
-  if (page === 'users') loadUsers();
+  if (page === 'users') loadTeam();
+  if (page === 'gusers') loadUsers();
   if (page === 'serverconf') loadProps();
   if (page === 'plugins') { loadInstalledPlugins(); searchPlugins(1); }
   if (page === 'backups') loadBackups();
@@ -1740,7 +1780,69 @@ async function saveProps() {
   toast(r.ok?'✅ Gespeichert! Server neu starten damit Änderungen aktiv werden.':'❌ '+r.msg, r.ok?'ok':'err');
 }
 
-// ── Users ────────────────────────────────────
+// ── Team (Server-Benutzer) ───────────────────
+const PERM_LABELS = {
+  console: 'Konsole', files: 'Dateien', plugins: 'Plugins', backups: 'Backups',
+  power: 'Start/Stop', config: 'Config', team: 'Team',
+};
+async function loadTeam() {
+  const r = await api('/api/team');
+  const tb = $('team-list');
+  if (!tb) return;
+  if (!r.ok) { tb.innerHTML = `<tr><td colspan="4" style="padding:16px;color:var(--t2)">${esc(r.msg||'Fehler')}</td></tr>`; return; }
+  srvCanTeam = !!r.canManage || role === 'admin';
+  applyRole();
+  if ($('team-add-box')) $('team-add-box').style.display = r.canManage ? '' : 'none';
+  const rows = [];
+  if (r.owner) {
+    rows.push(`<tr>
+      <td style="font-weight:700">${esc(r.owner.username)}</td>
+      <td><span class="role-badge admin">Besitzer</span></td>
+      <td style="color:var(--t2);font-size:12px">Alles</td>
+      <td></td>
+    </tr>`);
+  }
+  (r.members || []).forEach(m => {
+    const perms = (m.perms || []).map(p => PERM_LABELS[p] || p).join(', ');
+    const canEdit = r.canManage;
+    rows.push(`<tr>
+      <td style="font-weight:600">${esc(m.username)}</td>
+      <td>${canEdit ? `<select id="tm-r-${m.userId}" onchange="setTeamRole('${m.userId}')" style="background:var(--bg);border:1px solid var(--b2);border-radius:var(--r);color:var(--text);padding:4px 8px">
+        <option value="helper" ${m.role==='helper'?'selected':''}>Helfer</option>
+        <option value="mod" ${m.role==='mod'?'selected':''}>Techniker</option>
+        <option value="admin" ${m.role==='admin'?'selected':''}>Admin</option>
+      </select>` : `<span class="role-badge user">${esc(m.roleLabel||m.role)}</span>`}</td>
+      <td style="color:var(--t2);font-size:12px">${esc(perms)}</td>
+      <td>${canEdit ? `<button class="btn btn-r btn-sm" onclick="removeTeamMember('${m.userId}','${esc(m.username)}')">Entfernen</button>` : ''}</td>
+    </tr>`);
+  });
+  if (rows.length < 2 && !(r.members || []).length) {
+    rows.push(`<tr><td colspan="4" style="padding:18px;color:var(--t2)">Noch niemand im Team. Oben Username eintragen.</td></tr>`);
+  }
+  tb.innerHTML = rows.join('');
+}
+async function addTeamMember() {
+  const username = ($('tm-name')||{}).value?.trim();
+  const role_ = ($('tm-role')||{}).value || 'helper';
+  if (!username) { toast('Username fehlt', 'err'); return; }
+  const r = await api('/api/team', 'POST', { username, role: role_ });
+  toast(r.ok ? '✅ ' + username + ' hinzugefügt' : '❌ ' + (r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) { $('tm-name').value = ''; loadTeam(); }
+}
+async function setTeamRole(userId) {
+  const role_ = document.getElementById('tm-r-' + userId)?.value;
+  const r = await api('/api/team/' + userId, 'PUT', { role: role_ });
+  toast(r.ok ? '✅ Rechte geändert' : '❌ ' + (r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) loadTeam();
+}
+async function removeTeamMember(userId, name) {
+  if (!confirm('"' + name + '" vom Server-Team entfernen?')) return;
+  const r = await api('/api/team/' + userId, 'DELETE');
+  toast(r.ok ? 'Entfernt' : '❌ ' + (r.msg||'Fehler'), r.ok?'ok':'err');
+  if (r.ok) loadTeam();
+}
+
+// ── Globale Accounts ─────────────────────────
 async function loadUsers() {
   const r = await api('/api/users');
   if (!r.ok) return;
@@ -1754,7 +1856,7 @@ async function loadUsers() {
 }
 async function createUser() {
   const name=$('nu-name').value.trim(), email=$('nu-email').value.trim(), pass=$('nu-pass').value, role_=$('nu-role').value;
-  if(!name||!pass||!email){toast('Name, E-Mail und Passwort erforderlich','err');return;}
+  if(!name||!pass){toast('Name und Passwort erforderlich','err');return;}
   const r=await api('/api/users','POST',{username:name,email,password:pass,role:role_});
   if(r.ok){toast('✅ Benutzer erstellt','ok');$('nu-name').value='';$('nu-email').value='';$('nu-pass').value='';loadUsers();}
   else toast('❌ '+r.msg,'err');
