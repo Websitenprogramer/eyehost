@@ -59,8 +59,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .sb-footer{padding:10px;border-top:1px solid var(--b1)}
 .sb-server{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;margin-bottom:8px}
 .sb-srv-label{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
-.sb-srv-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.sb-srv-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-srv-row{display:flex;align-items:center;gap:8px}
+.sb-srv-ava{
+  width:32px;height:32px;border-radius:9px;overflow:hidden;flex-shrink:0;padding:0;cursor:pointer;
+  background:rgba(91,140,255,.14);color:var(--accent-h);border:1px solid rgba(91,140,255,.2);
+  display:grid;place-items:center
+}
+.sb-srv-ava img{width:100%;height:100%;object-fit:cover;display:block}
+.sb-srv-ava svg{width:16px;height:16px;fill:currentColor}
+.sb-srv-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
 .pill.on{background:var(--green-dim);color:var(--green)}
 .pill.off{background:var(--red-dim);color:var(--red)}
@@ -241,7 +248,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .tk-b.user{align-self:flex-end;background:var(--accent-dim);border:1px solid rgba(91,140,255,.25)}
 .tk-b.staff{align-self:flex-start;background:var(--s2);border:1px solid var(--b1)}
 .tk-b small{display:block;color:var(--t3);font-size:10px;margin-bottom:4px}
-.srv-card{min-height:170px;border-radius:16px;padding:20px}
+.srv-card{min-height:210px;border-radius:20px;padding:22px}
 .admin-box{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:18px;margin-bottom:14px}
 .ni-back{background:var(--accent-dim)!important;color:var(--accent-h)!important;font-weight:700;margin-bottom:8px}
 
@@ -264,6 +271,34 @@ body{background:
 @keyframes pulse-glow{0%,100%{box-shadow:0 0 0 6px rgba(91,140,255,.12)}50%{box-shadow:0 0 28px 8px rgba(91,140,255,.28)}}
 .lc-btn{transition:transform .15s,background .2s,box-shadow .2s}
 .lc-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(91,140,255,.35)}
+#home{background:
+  radial-gradient(900px 420px at 8% -8%,rgba(91,140,255,.22),transparent 52%),
+  radial-gradient(700px 380px at 100% 0%,rgba(168,85,247,.14),transparent 48%),
+  var(--bg)}
+.lobby-hero{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;
+  padding:28px;margin-bottom:22px;border-radius:22px;
+  background:linear-gradient(135deg,rgba(91,140,255,.16),rgba(168,85,247,.08) 55%,transparent),
+    linear-gradient(180deg,rgba(255,255,255,.03),transparent),var(--s1);
+  border:1px solid var(--b1);position:relative;overflow:hidden
+}
+.lobby-hero::after{content:'';position:absolute;right:-40px;top:-50px;width:220px;height:220px;border-radius:50%;background:rgba(91,140,255,.18);filter:blur(20px);pointer-events:none}
+.lobby-kicker{color:var(--accent-h);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.lobby-hero h2{font-size:clamp(26px,4vw,36px);letter-spacing:-.04em;margin:0 0 6px}
+.home-kpis .sc{border-radius:18px;padding:18px 20px}
+.srv-grid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.srv-card{gap:14px}
+.srv-ico{
+  width:52px;height:52px;border-radius:14px;display:grid;place-items:center;flex-shrink:0;padding:0;overflow:hidden;cursor:pointer;
+  background:rgba(91,140,255,.14);color:var(--accent-h);border:1px solid rgba(91,140,255,.2)
+}
+.srv-ico:hover{border-color:var(--accent-h)}
+.srv-card.live .srv-ico{background:rgba(16,185,129,.14);color:var(--green);border-color:rgba(16,185,129,.25)}
+.srv-ico svg{width:22px;height:22px;fill:currentColor}
+.srv-ico img{width:100%;height:100%;object-fit:cover;display:block}
+.chip{font-size:11px;font-weight:700;color:var(--t2);background:var(--s2);border:1px solid var(--b1);border-radius:99px;padding:4px 9px}
+.srv-chips{display:flex;flex-wrap:wrap;gap:6px}
+.empty{padding:42px 28px;border-radius:20px}
 .home-wrap{animation:pop .45s cubic-bezier(.22,1,.36,1)}
 .hpanel.on{animation:rise .35s ease}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -351,17 +386,24 @@ body{background:
   </div>
   <div class="home-wrap">
     <div class="hpanel on" id="htab-servers">
-      <div class="home-head">
+      <div class="lobby-hero">
         <div>
-          <div class="tb-title" style="font-size:28px;letter-spacing:-.04em">Deine Instanzen</div>
-          <div class="tb-sub">Starten, Dateien, Plugins — wie bei einem echten Host.</div>
+          <div class="lobby-kicker">Dein Bereich</div>
+          <h2 id="lobby-title">Willkommen zurück</h2>
+          <div class="tb-sub">Wähle eine Instanz. Danach öffnet sich die richtige Konsole — Dateien, Plugins, Start/Stop.</div>
         </div>
-        <a class="btn btn-p" href="/#shop">Server kaufen</a>
+        <a class="btn btn-p" href="/#shop">Neuen Server kaufen</a>
       </div>
       <div class="home-kpis">
         <div class="sc"><div class="sc-lbl">Server</div><div class="sc-val b" id="kpi-n">0</div><div class="sc-badge b">auf deinem Account</div></div>
         <div class="sc"><div class="sc-lbl">Online</div><div class="sc-val g" id="kpi-on">0</div><div class="sc-badge g">gerade aktiv</div></div>
         <div class="sc"><div class="sc-lbl">Standort</div><div class="sc-val" style="font-size:18px">Deutschland</div><div class="sc-badge b">niedrige Latenz</div></div>
+      </div>
+      <div class="home-head" style="margin-top:4px">
+        <div>
+          <div class="tb-title" style="font-size:18px">Deine Instanzen</div>
+          <div class="tb-sub">Klick auf eine Karte, um ins Panel zu gehen.</div>
+        </div>
       </div>
       <div class="srv-grid" id="srv-list"></div>
     </div>
@@ -420,10 +462,10 @@ body{background:
       </div>
       <div class="admin-box">
         <div class="tb-title" style="font-size:15px">Server erstellen</div>
-        <div class="tb-sub">Nur für dich. Danach kannst du ihn löschen. Optional direkt an eine registrierte E-Mail geben.</div>
+        <div class="tb-sub">Nur für dich. Danach kannst du ihn löschen. Optional direkt an Username oder E-Mail geben.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
           <input class="inp" id="new-srv" placeholder="Servername" style="margin:0;width:200px"/>
-          <input class="inp" id="new-srv-email" placeholder="E-Mail zum Vergeben (optional)" style="margin:0;width:260px"/>
+          <input class="inp" id="new-srv-email" placeholder="Username oder E-Mail zum Vergeben (optional)" style="margin:0;width:280px"/>
           <button class="btn btn-p" onclick="createServer()">Erstellen</button>
         </div>
       </div>
@@ -500,6 +542,9 @@ body{background:
       <div class="sb-server">
         <div class="sb-srv-label">Server</div>
         <div class="sb-srv-row">
+          <button type="button" class="sb-srv-ava" id="sb-ava" title="Profilbild ändern" onclick="pickOpenSrvAvatar(event)">
+            <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          </button>
           <div class="sb-srv-name" id="sb-name">Minecraft</div>
           <div class="pill off" id="sb-pill"><div class="pdot" id="sb-dot"></div><span id="sb-txt">Offline</span></div>
         </div>
@@ -808,6 +853,58 @@ let serverId = localStorage.getItem('eh3s') || '';
 let cSince = 0;
 let curPath = '';
 let curFile = '';
+let avatarTarget = '';
+const EYE_SVG = '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+function srvAvatarHtml(s, cls) {
+  const klass = cls || 'srv-ico';
+  const title = s.avatar ? 'Profilbild ändern' : 'Profilbild setzen';
+  if (s.avatar) {
+    return `<button type="button" class="${klass}" title="${title}" onclick="pickSrvAvatar('${s.id}',event)"><img src="/api/servers/${s.id}/avatar?t=${s.avatarAt||1}" alt="" onerror="this.style.display='none';var e=this.nextElementSibling;if(e)e.style.display='block'">${EYE_SVG.replace('<svg', '<svg style="display:none"')}</button>`;
+  }
+  return `<button type="button" class="${klass}" title="${title}" onclick="pickSrvAvatar('${s.id}',event)">${EYE_SVG}</button>`;
+}
+function paintSbAvatar(id, hasAva) {
+  const box = $('sb-ava');
+  if (!box) return;
+  if (hasAva && id) {
+    box.innerHTML = `<img src="/api/servers/${id}/avatar?t=${Date.now()}" alt="" onerror="this.style.display='none';var e=this.nextElementSibling;if(e)e.style.display='block'">${EYE_SVG.replace('<svg', '<svg style="display:none"')}`;
+  } else {
+    box.innerHTML = EYE_SVG;
+  }
+}
+function pickSrvAvatar(id, ev) {
+  if (ev) ev.stopPropagation();
+  if (!id) return;
+  avatarTarget = id;
+  const inp = $('srv-av-up');
+  if (!inp) return;
+  inp.value = '';
+  inp.click();
+}
+function pickOpenSrvAvatar(ev) {
+  if (!serverId) return;
+  pickSrvAvatar(serverId, ev);
+}
+async function uploadSrvAvatar(files) {
+  const file = files && files[0];
+  const id = avatarTarget;
+  if (!file || !id) return;
+  if (file.size > 1200 * 1024) { toast('Bild zu groß (max. 1 MB)', 'err'); return; }
+  const data = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+  const old = serverId; serverId = '';
+  const r = await api('/api/servers/' + id + '/avatar', 'POST', { data });
+  serverId = old;
+  toast(r.ok ? 'Profilbild gesetzt' : '❌ ' + (r.msg || 'Fehler'), r.ok ? 'ok' : 'err');
+  if (r.ok) {
+    if ($('home') && $('home').style.display !== 'none') showHome();
+    if (serverId === id) paintSbAvatar(id, true);
+  }
+}
 
 function showReg(on) {
   $('login-box').style.display = on ? 'none' : '';
@@ -952,6 +1049,7 @@ async function showHome() {
   if (currentHomeTab === 'shop') currentHomeTab = 'servers';
   homeTab(currentHomeTab);
   if ($('home-hello')) $('home-hello').textContent = meName || 'Account';
+  if ($('lobby-title')) $('lobby-title').textContent = meName ? ('Hey, ' + meName) : 'Willkommen zurück';
   const [r, shop, tix, ords] = await Promise.all([
     api('/api/servers'),
     api('/api/shop'),
@@ -970,24 +1068,34 @@ async function showHome() {
   if ($('kpi-on')) $('kpi-on').textContent = list.filter(s => s.running).length;
   if (!r.ok) { box.innerHTML = `<div class="empty">${r.msg||'Fehler'}</div>`; return; }
   if (!list.length) {
-    box.innerHTML = '<div class="empty">Noch keine Instanz.<br>Server kaufst du auf der <a href="/#shop" style="color:var(--accent-h)">Website</a>, nicht in der Konsole.</div>';
+    box.innerHTML = '<div class="empty"><div class="lobby-kicker">Noch leer</div><div class="tb-title" style="font-size:22px;margin:8px 0 6px">Kein Server auf dem Account</div>Kauf ein Paket auf der Website. Danach liegt die Instanz hier und du öffnest die Konsole.<br><a class="btn btn-p" href="/#shop" style="margin-top:16px">Zum Shop</a></div>';
     return;
   }
   box.innerHTML = list.map(s => {
     const canAssign = role === 'admin' && !s.locked;
     return `
     <div class="srv-card ${s.running?'live':''}">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="pcard-name" style="font-size:18px">${esc(s.name)}</div>
-          <div style="color:var(--t3);font-size:11px;margin-top:3px">Paper · ${esc(s.loc||'Deutschland')} · Port ${s.port}${s.owner?(' · '+esc(s.owner)):''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="display:flex;gap:12px;align-items:center;min-width:0">
+          ${srvAvatarHtml(s)}
+          <div style="min-width:0">
+            <div class="pcard-name" style="font-size:20px;letter-spacing:-.03em">${esc(s.name)}</div>
+            <div style="color:var(--t3);font-size:12px;margin-top:3px">${esc(s.owner||meName||'Dein Server')}</div>
+          </div>
         </div>
         <div class="pill ${s.running?'on':'off'}"><div class="pdot ${s.running?'pulse':''}"></div>${s.running?'Online':'Offline'}</div>
       </div>
-      <div style="color:var(--t2);font-size:12px;margin-top:8px">${s.ram?esc(s.ram)+' RAM':''}${s.plan?(' · Paket '+s.plan):''}${expText(s)}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto">
-        <button class="btn btn-p" onclick="openServer('${s.id}','${esc(s.name)}')">Konsole öffnen</button>
-        ${canAssign?`<button class="btn btn-n btn-sm" onclick="assignServer('${s.id}')">Per E-Mail vergeben</button>`:''}
+      <div class="srv-chips">
+        <span class="chip">Paper</span>
+        <span class="chip">${esc(s.loc||'Deutschland')}</span>
+        <span class="chip">Port ${esc(s.port)}</span>
+        ${s.ram?`<span class="chip">${esc(s.ram)} RAM</span>`:''}
+        ${s.plan?`<span class="chip">Paket ${esc(s.plan)}</span>`:''}
+        ${expText(s)?`<span class="chip">${esc(expText(s).replace(/^ · /,''))}</span>`:''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto">
+        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="openServer('${s.id}','${esc(s.name)}',${s.avatar?true:false})">Panel öffnen</button>
+        ${canAssign?`<button class="btn btn-n btn-sm" onclick="assignServer('${s.id}')">Vergeben</button>`:''}
         ${s.canDelete?`<button class="btn btn-r btn-sm del-ghost" onclick="deleteServer('${s.id}','${esc(s.name)}')">Löschen</button>`:''}
       </div>
     </div>`;
@@ -1270,27 +1378,28 @@ async function sendTicket() {
 async function createServer() {
   const name = $('new-srv').value.trim();
   const email = $('new-srv-email').value.trim();
-  const r = await api('/api/servers','POST',{name, email});
+  const r = await api('/api/servers','POST',{name, email, username: email});
   if (r.ok && r.warn) toast('⚠️ Server erstellt, Vergabe: '+r.warn, 'err');
-  else toast(r.ok?(email?'✅ Server erstellt und vergeben':'✅ Server erstellt'):'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  else toast(r.ok?(email?'✅ Server erstellt und an '+(r.givenTo||email)+' vergeben':'✅ Server erstellt'):'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
   if (r.ok) { $('new-srv').value=''; $('new-srv-email').value=''; showHome(); }
 }
 async function assignServer(id) {
-  const email = prompt('An welche E-Mail vergeben? Die Person muss sich schon mit dieser Mail registriert haben.');
-  if (!email) return;
+  const who = prompt('An wen vergeben? Username oder E-Mail. Die Person muss schon registriert sein.');
+  if (!who) return;
   const old = serverId; serverId = '';
-  const r = await api('/api/servers/'+id+'/assign','POST',{email:email.trim()});
+  const r = await api('/api/servers/'+id+'/assign','POST',{email:who.trim(), username:who.trim()});
   serverId = old;
-  toast(r.ok?'📨 Server an die E-Mail übergeben':'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
+  toast(r.ok?('📨 Server an '+(r.givenTo||who.trim())+' übergeben'):'❌ '+(r.msg||'Fehler'), r.ok?'ok':'err');
   if (r.ok) showHome();
 }
-function openServer(id, name) {
+function openServer(id, name, hasAva) {
   serverId = id;
   localStorage.setItem('eh3s', id);
   cSince = 0;
   $('home').style.display = 'none';
   $('app').style.display = 'flex';
   $('sb-name').textContent = name || 'Server';
+  paintSbAvatar(id, !!hasAva);
   if ($('app-srv-title')) $('app-srv-title').textContent = name || 'Server';
   if ($('main-con')) $('main-con').innerHTML='';
   if ($('d-con')) $('d-con').innerHTML='';
@@ -1664,5 +1773,6 @@ async function changePass(id){
   if(r.ok)document.getElementById('pw-'+id).value='';
 }
 </script>
+<input type="file" id="srv-av-up" accept="image/png,image/jpeg,image/webp" hidden onchange="uploadSrvAvatar(this.files)"/>
 </body>
 </html>

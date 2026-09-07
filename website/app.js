@@ -1,12 +1,25 @@
-const PUBLIC_API = String(window.EYEHOST_API || '').replace(/\/$/, '');
-const API = (!PUBLIC_API || location.host === new URL(PUBLIC_API).host) ? '' : PUBLIC_API;
+function resolveApi() {
+  const configured = String(window.EYEHOST_API || '').replace(/\/$/, '');
+  if (!configured) return '';
+  try {
+    if (location.host === new URL(configured).host) return '';
+  } catch { /* ignore */ }
+  return configured;
+}
+const API = resolveApi();
 const PAGE = document.body.getAttribute('data-page') || 'shop';
+const FALLBACK_PLANS = [
+  { id: 'starter', name: 'Starter', ram: '2G', cpu: '1 vCore', disk: '15 GB NVMe', players: 10, backups: 1, loc: 'Deutschland', ddos: true, days: 30, price: 4.99, desc: 'Für Tests und kleine Welten' },
+  { id: 'plus', name: 'Plus', ram: '4G', cpu: '2 vCores', disk: '30 GB NVMe', players: 20, backups: 3, loc: 'Deutschland', ddos: true, days: 30, price: 8.99, desc: 'Für Freunde und Plugins' },
+  { id: 'pro', name: 'Pro', ram: '8G', cpu: '3 vCores', disk: '60 GB NVMe', players: 40, backups: 7, loc: 'Deutschland', ddos: true, days: 30, price: 14.99, desc: 'Mehr Power, Events, Mods' },
+];
 let token = localStorage.getItem('eh3') || '';
 let me = '';
 let role = '';
 let authMode = 'login';
 let openTicketId = '';
 let tkTimer = null;
+let apiLive = false;
 
 function $(id) { return document.getElementById(id); }
 
@@ -17,15 +30,26 @@ async function api(path, method, body, serverId) {
     'ngrok-skip-browser-warning': '1',
   };
   if (serverId) headers['X-Server-Id'] = serverId;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 6000);
   try {
     const r = await fetch(API + path, {
       method: method || 'GET',
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      signal: ctrl.signal,
     });
-    return await r.json();
+    const text = await r.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch {
+      return { ok: false, msg: 'Website-Server ist gerade nicht erreichbar.' };
+    }
+    if (r.ok && data && data.ok !== false) apiLive = true;
+    return data;
   } catch (e) {
     return { ok: false, msg: 'Website-Server ist gerade nicht erreichbar. Der Host-PC muss laufen.' };
+  } finally {
+    clearTimeout(t);
   }
 }
 
@@ -94,7 +118,7 @@ function logout() {
 }
 
 function renderUser() {
-  const loggedIn = !!token;
+  const loggedIn = !!(token && me);
   if ($('nav-area')) $('nav-area').hidden = !loggedIn;
   if ($('area-bar')) $('area-bar').hidden = !loggedIn;
   const box = $('authbox');
@@ -241,8 +265,9 @@ function closeSpecs() {
 
 async function loadShop() {
   if (PAGE !== 'shop' || !$('shop-list')) return;
+  renderShop(FALLBACK_PLANS);
   const r = await api('/api/shop');
-  renderShop(r.ok ? (r.plans || []) : []);
+  if (r.ok && Array.isArray(r.plans) && r.plans.length) renderShop(r.plans);
 }
 
 async function buy(planId) {
@@ -251,7 +276,11 @@ async function buy(planId) {
     toast('Bitte zuerst anmelden.');
     return;
   }
-  const r = await api('/api/shop/buy', 'POST', { planId, instant: role === 'admin' ? undefined : undefined });
+  const r = await api('/api/shop/buy', 'POST', { planId });
+  if (!r.ok && !apiLive) {
+    toast('Kaufen geht erst, wenn der Host online ist. Pakete siehst du trotzdem.');
+    return;
+  }
   if (r.ok && r.instant) {
     toast('Server ist angelegt.');
     location.href = 'me.html';
@@ -402,15 +431,17 @@ async function sendTicket() {
 }
 
 async function boot() {
+  renderUser();
   if (PAGE === 'shop') loadShop();
   if (!token) {
-    renderUser();
     if (PAGE === 'me') openAuth('login');
     return;
   }
   const meR = await api('/api/me');
   if (!meR.ok) {
     token = '';
+    me = '';
+    role = '';
     localStorage.removeItem('eh3');
     localStorage.removeItem('eh3u');
     renderUser();
@@ -421,7 +452,6 @@ async function boot() {
   role = meR.role || 'user';
   localStorage.setItem('eh3u', me);
   renderUser();
-  if (PAGE === 'shop') loadShop();
   if (PAGE === 'me') {
     loadServers();
     loadTickets();

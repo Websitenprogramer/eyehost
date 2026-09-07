@@ -412,6 +412,24 @@ function usernameOf(id) {
   return DB.users.find((u) => u.id === id)?.username || '?';
 }
 
+function avatarPath(rec) {
+  if (!rec || !rec.dir) return '';
+  const named = rec.avatar && typeof rec.avatar === 'string' ? path.basename(rec.avatar) : '';
+  if (named && /^eyehost-avatar\.(png|jpe?g|webp)$/i.test(named)) {
+    const f = path.join(rec.dir, named);
+    if (fs.existsSync(f)) return f;
+  }
+  for (const n of ['eyehost-avatar.png', 'eyehost-avatar.jpg', 'eyehost-avatar.jpeg', 'eyehost-avatar.webp']) {
+    const f = path.join(rec.dir, n);
+    if (fs.existsSync(f)) return f;
+  }
+  return '';
+}
+
+function hasAvatar(rec) {
+  return !!avatarPath(rec);
+}
+
 function publicServer(s, user) {
   const i = INST.get(s.id);
   const owner = DB.users.find((u) => u.id === s.ownerId);
@@ -427,6 +445,8 @@ function publicServer(s, user) {
     locked: !!s.locked || s.id === 'main',
     plan: s.planId || null,
     ram: s.ram || '',
+    avatar: hasAvatar(s),
+    avatarAt: s.avatarAt || 0,
     expiresAt: s.expiresAt || null,
     sharedWith: (s.sharedWith || []).map((id) => {
       const u = DB.users.find((x) => x.id === id);
@@ -522,18 +542,26 @@ function deleteGameServer(user, id) {
 }
 
 function assignByEmail(rec, email, actor) {
+  return assignToAccount(rec, email, actor);
+}
+
+function assignToAccount(rec, query, actor) {
   if (!rec || rec.locked || rec.id === 'main') {
     return { ok: false, msg: 'Diesen Server kannst du nicht vergeben.' };
   }
-  const target = findUserByEmail(email) || findUserByLogin(email);
-  if (!target) return { ok: false, msg: 'Kein Konto mit dieser E-Mail. Die Person muss sich erst registrieren.' };
+  const q = String(query || '').trim();
+  if (!q) return { ok: false, msg: 'Username oder E-Mail fehlt.' };
+  const target = findUserByLogin(q) || findUserByEmail(q);
+  if (!target) {
+    return { ok: false, msg: 'Kein Konto mit diesem Username oder dieser E-Mail. Die Person muss sich erst registrieren.' };
+  }
   rec.ownerId = target.id;
   rec.sharedWith = (rec.sharedWith || []).filter((id) => id !== target.id);
   if (actor && actor.id !== target.id && !(rec.sharedWith || []).includes(actor.id) && actor.role !== 'admin') {
     rec.sharedWith.push(actor.id);
   }
   saveDB();
-  return { ok: true, server: publicServer(rec, actor) };
+  return { ok: true, server: publicServer(rec, actor), givenTo: target.username };
 }
 
 function createSession(userId, role) {
@@ -1221,6 +1249,26 @@ const server = http.createServer(async (req, res) => {
     return servePluginIcon(p.split('/').pop(), res);
   }
 
+  if (/^\/api\/servers\/[^/]+\/avatar$/.test(p) && req.method === 'GET') {
+    const tok = getToken(req) || url.searchParams.get('access') || '';
+    const sess = getSession(tok);
+    const avUser = sess ? DB.users.find((u) => u.id === sess.userId) : null;
+    const rec = DB.servers.find((s) => s.id === p.split('/')[3]);
+    if (!avUser || !rec || !canUseServer(avUser, rec)) {
+      res.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
+      return res.end();
+    }
+    const f = avatarPath(rec);
+    if (!f) {
+      res.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
+      return res.end();
+    }
+    const ext = path.extname(f).toLowerCase();
+    const type = ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' : ext === '.webp' ? 'image/webp' : 'image/png';
+    res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
+    return res.end(fs.readFileSync(f));
+  }
+
   if (p === '/api/modlog' && req.method === 'POST') {
     const b = await parseBody(req);
     if (b.secret !== CONFIG.modlogSecret) return json(res, { ok: false, msg: 'Unauthorized' }, 403);
@@ -1525,13 +1573,43 @@ const server = http.createServer(async (req, res) => {
     if (user.role !== 'admin') return json(res, { ok: false, msg: 'Server erstellen kann nur der Host.' }, 403);
     const b = await parseBody(req);
     const made = createGameServer(user, b.name);
-    if (made.ok && String(b.email || '').trim()) {
+    const who = String(b.email || b.username || '').trim();
+    if (made.ok && who) {
       const rec = DB.servers.find((s) => s.id === made.server.id);
-      const assigned = assignByEmail(rec, b.email, user);
+      const assigned = assignToAccount(rec, who, user);
       if (!assigned.ok) return json(res, { ok: true, server: made.server, warn: assigned.msg });
       return json(res, assigned);
     }
     return json(res, made);
+  }
+  if (/^\/api\/servers\/[^/]+\/avatar$/.test(p) && req.method === 'POST') {
+    const rec = DB.servers.find((s) => s.id === p.split('/')[3]);
+    if (!rec) return json(res, { ok: false, msg: 'Server nicht gefunden.' }, 404);
+    if (!isOwner(user, rec)) return json(res, { ok: false, msg: 'Kein Zugriff.' }, 403);
+    if (!rec.dir || !fs.existsSync(rec.dir)) return json(res, { ok: false, msg: 'Server-Ordner fehlt.' }, 400);
+    const b = await parseBody(req);
+    const raw = String(b.data || '');
+    if (raw.length > 2_000_000) return json(res, { ok: false, msg: 'Bild zu groß (max. 1 MB).' }, 400);
+    const m = raw.match(/^data:(image\/(?:png|jpeg|jpg|webp));base64,([A-Za-z0-9+/=\s]+)$/i);
+    if (!m) return json(res, { ok: false, msg: 'Nur PNG, JPG oder WebP.' }, 400);
+    const mime = m[1].toLowerCase() === 'image/jpg' ? 'image/jpeg' : m[1].toLowerCase();
+    let buf;
+    try { buf = Buffer.from(m[2].replace(/\s+/g, ''), 'base64'); } catch { return json(res, { ok: false, msg: 'Bild ungültig.' }, 400); }
+    if (!buf.length || buf.length > 1200 * 1024) return json(res, { ok: false, msg: 'Bild zu groß (max. 1 MB).' }, 400);
+    const ext = mime === 'image/jpeg' ? 'jpg' : mime === 'image/webp' ? 'webp' : 'png';
+    const name = 'eyehost-avatar.' + ext;
+    for (const old of ['eyehost-avatar.png', 'eyehost-avatar.jpg', 'eyehost-avatar.jpeg', 'eyehost-avatar.webp']) {
+      const of = path.join(rec.dir, old);
+      if (old !== name && fs.existsSync(of)) {
+        try { fs.unlinkSync(of); } catch { /* ignore */ }
+      }
+    }
+    fs.writeFileSync(path.join(rec.dir, name), buf);
+    rec.avatar = name;
+    rec.avatarType = mime;
+    rec.avatarAt = Date.now();
+    saveDB();
+    return json(res, { ok: true, avatar: true, avatarAt: rec.avatarAt });
   }
   if (p.startsWith('/api/servers/') && (p.endsWith('/share') || p.endsWith('/assign')) && req.method === 'POST') {
     const id = p.split('/')[3];
@@ -1539,7 +1617,7 @@ const server = http.createServer(async (req, res) => {
     if (user.role !== 'admin') return json(res, { ok: false, msg: 'Nur der Host kann Server vergeben.' }, 403);
     if (!isOwner(user, rec)) return json(res, { ok: false, msg: 'Kein Zugriff.' }, 403);
     const b = await parseBody(req);
-    return json(res, assignByEmail(rec, b.email || b.username, user));
+    return json(res, assignToAccount(rec, b.email || b.username, user));
   }
   if (p.startsWith('/api/servers/') && req.method === 'DELETE') {
     const id = p.split('/').pop();

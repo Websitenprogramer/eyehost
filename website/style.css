@@ -52,6 +52,7 @@ nav a { color: var(--t2); text-decoration: none; font-weight: 600; }
   background: var(--accent); color: #fff !important; border-radius: 999px;
   padding: 7px 12px; font-size: 13px;
 }
+[hidden] { display: none !important; }
 .area-bar {
   max-width: 1080px; margin: 0 auto 8px; padding: 14px 18px;
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
