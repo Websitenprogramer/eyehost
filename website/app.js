@@ -34,6 +34,7 @@ const FALLBACK_PLANS = [
   { id: 'starter', name: 'Starter', ram: '2G', cpu: '1 vCore', disk: '15 GB NVMe', players: 10, backups: 1, loc: 'Deutschland', ddos: true, days: 30, price: 4.99, desc: 'Für Tests und kleine Welten' },
   { id: 'plus', name: 'Plus', ram: '4G', cpu: '2 vCores', disk: '30 GB NVMe', players: 20, backups: 3, loc: 'Deutschland', ddos: true, days: 30, price: 8.99, desc: 'Für Freunde und Plugins' },
   { id: 'pro', name: 'Pro', ram: '8G', cpu: '3 vCores', disk: '60 GB NVMe', players: 40, backups: 7, loc: 'Deutschland', ddos: true, days: 30, price: 14.99, desc: 'Mehr Power, Events, Mods' },
+  { id: 'panel', kind: 'panel', name: 'Panel', ram: 'Dein Root', cpu: 'SSH', disk: 'Auf deinem VPS', players: '–', backups: '–', loc: 'Dein Server', ddos: false, days: 30, price: 9.99, desc: 'Eigenes Eye Host Panel. Nach dem Kauf verbindest du deinen Root-Server.' },
 ];
 let token = localStorage.getItem('eh3') || '';
 let me = '';
@@ -178,7 +179,7 @@ async function loadServers() {
   const list = r.servers || [];
   $('srv-hint').textContent = list.length
     ? 'Start, Stop und Restart direkt hier.'
-    : 'Noch kein Server. Kauf dir eins im Shop.';
+    : 'Noch kein Minecraft-Paket. Panel für deinen Root-Server liegt oben.';
   $('srv-list').innerHTML = list.map((s) => `
     <div class="card srv">
       <div class="srv-top">
@@ -196,6 +197,70 @@ async function loadServers() {
         ${s.canDelete ? `<button class="btn btn-r btn-sm" type="button" onclick="delSrv('${s.id}','${esc(s.name)}')">Löschen</button>` : ''}
       </div>
     </div>`).join('');
+}
+
+async function loadNodes() {
+  if (!token || !$('node-list')) return;
+  const r = await api('/api/nodes');
+  const box = $('node-list');
+  const hint = $('node-hint');
+  if (!r.ok) {
+    if (hint) hint.textContent = r.msg || 'Panel nicht ladbar.';
+    box.innerHTML = '';
+    return;
+  }
+  const list = r.nodes || [];
+  if (hint) {
+    hint.textContent = list.length
+      ? 'IP, SSH-Port, User und Passwort vom Root-Server eintragen. Danach ist das Panel verbunden.'
+      : 'Noch kein Panel. Im Shop „Panel“ kaufen, dann erscheint hier die Verbindung.';
+  }
+  if (!list.length) {
+    box.innerHTML = '<a class="btn btn-p" href="./#shop">Panel kaufen</a>';
+    return;
+  }
+  box.innerHTML = list.map((n) => `
+    <div class="card srv node-card">
+      <div class="srv-top">
+        <div>
+          <div class="srv-name">${esc(n.name)}</div>
+          <div class="note">${n.host ? esc(n.sshUser + '@' + n.host + ':' + n.sshPort) : 'Noch kein Root-Server verbunden'}</div>
+        </div>
+        <div class="pill ${n.connected ? 'on' : ''}">${n.connected ? 'Verbunden' : 'Offen'}</div>
+      </div>
+      ${n.lastMsg ? `<p class="note">${esc(n.lastMsg)}</p>` : ''}
+      <input class="inp" id="n-name-${n.id}" placeholder="Name" value="${esc(n.name)}"/>
+      <input class="inp" id="n-host-${n.id}" placeholder="IP oder Domain vom Root-Server" value="${esc(n.host)}"/>
+      <div class="row" style="margin-top:8px">
+        <input class="inp" id="n-port-${n.id}" placeholder="SSH-Port" value="${esc(n.sshPort || 22)}" style="margin:0;width:110px"/>
+        <input class="inp" id="n-user-${n.id}" placeholder="User (root)" value="${esc(n.sshUser || 'root')}" style="margin:0;flex:1"/>
+      </div>
+      <input class="inp" id="n-pass-${n.id}" type="password" placeholder="${n.hasPass ? 'Passwort lassen oder neu setzen' : 'SSH-Passwort'}"/>
+      <div class="row">
+        <button class="btn btn-p btn-sm" type="button" onclick="connectNode('${n.id}')">Root-Server verbinden</button>
+        <button class="btn btn-r btn-sm" type="button" onclick="delNode('${n.id}')">Panel löschen</button>
+      </div>
+    </div>`).join('');
+}
+
+async function connectNode(id) {
+  const host = ($('n-host-' + id) || {}).value;
+  const r = await api('/api/nodes/' + id + '/connect', 'POST', {
+    name: ($('n-name-' + id) || {}).value,
+    host,
+    port: ($('n-port-' + id) || {}).value,
+    user: ($('n-user-' + id) || {}).value,
+    password: ($('n-pass-' + id) || {}).value,
+  });
+  toast(r.ok ? (r.msg || (r.reachable ? 'Root-Server verbunden.' : 'Gespeichert.')) : (r.msg || 'Fehler'));
+  if (r.ok) loadNodes();
+}
+
+async function delNode(id) {
+  if (!confirm('Dieses Panel wirklich löschen?')) return;
+  const r = await api('/api/nodes/' + id, 'DELETE');
+  toast(r.ok ? 'Panel gelöscht.' : (r.msg || 'Fehler'));
+  if (r.ok) loadNodes();
 }
 
 async function delSrv(id, name) {
@@ -218,6 +283,15 @@ function money(n) {
 }
 
 function specLines(p) {
+  if (p.kind === 'panel' || p.id === 'panel') {
+    return [
+      ['Typ', 'Eigenes Panel', 'Kein Minecraft-Paket auf unserem Host — du bekommst das Panel für deinen Root-Server.'],
+      ['Anbindung', 'SSH / IP', 'Nach dem Kauf trägst du IP, Port, User und Passwort deines VPS ein.'],
+      ['Server', 'Dein Root / VPS', 'Java, RAM und Welt laufen bei dir. Wir liefern nur das Panel.'],
+      ['Steuerung', 'Eye Host', 'Wenn der Root erreichbar ist, steuerst du ihn über Mein Bereich.'],
+      ['Laufzeit', (p.days || 30) + ' Tage', 'Nach der Zahlung ist das Panel so lange aktiv.'],
+    ];
+  }
   return [
     ['RAM', p.ram || '–', 'Arbeitsspeicher. Mehr RAM = mehr Plugins und eine größere Welt ohne Lag.'],
     ['CPU', p.cpu || '–', 'Rechenkerne für Chunks, Redstone und Events.'],
@@ -239,8 +313,9 @@ function renderShop(plans) {
     return;
   }
   box.innerHTML = shopCache.map((p) => `
-    <article class="card ${p.id === 'plus' ? 'on' : ''}">
+    <article class="card ${p.id === 'plus' || p.id === 'panel' ? 'on' : ''}">
       ${p.id === 'plus' ? '<div class="badge">Beliebt</div>' : ''}
+      ${p.id === 'panel' ? '<div class="badge">Root-Server</div>' : ''}
       <h3>${esc(p.name)}</h3>
       <p class="plan-desc">${esc(p.desc || '')}</p>
       <div class="price">${money(p.price)}<span> / 30 Tage</span></div>
@@ -297,14 +372,14 @@ async function buy(planId) {
     toast('Bitte zuerst anmelden.');
     return;
   }
-  const r = await api('/api/shop/buy', 'POST', { planId });
+  const r = await api('/api/shop/buy', 'POST', { planId, instant: role === 'admin' });
   if (!r.ok && !apiLive) {
     toast('Kaufen geht erst, wenn der Host online ist. Pakete siehst du trotzdem.');
     return;
   }
   if (r.ok && r.instant) {
-    toast('Server ist angelegt.');
-    location.href = 'me.html';
+    toast(r.kind === 'panel' ? 'Panel ist da. Jetzt Root-Server verbinden.' : 'Server ist angelegt.');
+    location.href = r.kind === 'panel' ? 'me.html#nodes' : 'me.html';
     return;
   }
   if (r.ok && r.redirect) {
@@ -474,6 +549,7 @@ async function boot() {
   localStorage.setItem('eh3u', me);
   renderUser();
   if (PAGE === 'me') {
+    loadNodes();
     loadServers();
     loadTickets();
   }

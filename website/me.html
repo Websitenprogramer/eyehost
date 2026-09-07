@@ -7,13 +7,14 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css?v=9"/>
+  <link rel="stylesheet" href="style.css?v=11"/>
 </head>
 <body data-page="me">
   <header class="top">
     <a class="brand" href="#top" onclick="return goShop(event)">Eye<em>Host</em></a>
     <nav>
       <a href="#top" onclick="return goShop(event)">Shop</a>
+      <a href="#nodes">Mein Panel</a>
       <a href="#servers">Meine Server</a>
       <a href="#tickets">Tickets</a>
     </nav>
@@ -26,7 +27,13 @@
     <section class="hero" id="top">
       <p class="kicker">Mein Bereich</p>
       <h1>Panel &amp; Tickets</h1>
-      <p class="lead">Hier steuerst du deine Server und schreibst dem Support. Shop bleibt auf der anderen Seite.</p>
+      <p class="lead">Panel für deinen Root-Server verbinden, Minecraft-Pakete steuern, Support schreiben.</p>
+    </section>
+
+    <section id="nodes">
+      <h2>Mein Panel</h2>
+      <p class="sub" id="node-hint">Panel kaufen, dann den Root-Server per IP anbinden.</p>
+      <div class="srv-grid" id="node-list"></div>
     </section>
 
     <section id="servers">
@@ -78,7 +85,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <script src="config.js?v=10"></script>
-  <script src="app.js?v=10"></script>
+  <script src="config.js?v=11"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

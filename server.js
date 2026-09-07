@@ -5,6 +5,7 @@
 
 const http = require('http');
 const https = require('https');
+const net = require('net');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -67,7 +68,7 @@ function saveSettings() {
   fs.writeFileSync(SETTINGS_FILE, JSON.stringify(keep, null, 2));
 }
 
-let DB = { users: [], sessions: {}, servers: [], orders: [], tickets: [], plans: null };
+let DB = { users: [], sessions: {}, servers: [], orders: [], tickets: [], plans: null, nodes: [] };
 
 function loadDB() {
   try {
@@ -77,6 +78,7 @@ function loadDB() {
   } catch (e) {
     console.error('DB load:', e.message);
   }
+  if (!Array.isArray(DB.nodes)) DB.nodes = [];
 }
 
 function saveDB() {
@@ -238,10 +240,23 @@ const DEFAULT_PLANS = [
     players: 40, backups: 7, loc: 'Deutschland', ddos: true, days: 30, price: 14.99,
     desc: 'Mehr Power, Events, Mods',
   },
+  {
+    id: 'panel', kind: 'panel', name: 'Panel', ram: 'Dein Root', cpu: 'SSH', disk: 'Auf deinem VPS',
+    players: '–', backups: '–', loc: 'Dein Server', ddos: false, days: 30, price: 9.99,
+    desc: 'Eigenes Eye Host Panel. Nach dem Kauf verbindest du deinen Root-Server.',
+  },
 ];
 
+function isPanelPlan(plan) {
+  return !!(plan && (plan.kind === 'panel' || plan.id === 'panel'));
+}
+
 function shopPlans() {
-  return Array.isArray(DB.plans) && DB.plans.length ? DB.plans : DEFAULT_PLANS;
+  const base = Array.isArray(DB.plans) && DB.plans.length ? DB.plans : DEFAULT_PLANS;
+  if (!base.some((p) => isPanelPlan(p))) {
+    return [...base, DEFAULT_PLANS.find((p) => p.id === 'panel')];
+  }
+  return base;
 }
 
 function paysafeReady() {
@@ -321,6 +336,22 @@ function fulfillPaidOrder(order) {
   if (!order || order.status === 'done') return { ok: true, order };
   const buyer = DB.users.find((u) => u.id === order.userId);
   if (!buyer) return { ok: false, msg: 'Käufer nicht gefunden.' };
+  const plan = shopPlans().find((x) => x.id === order.planId);
+  if (isPanelPlan(plan) || order.kind === 'panel') {
+    const made = createPanelLicense(buyer, {
+      planId: order.planId || 'panel',
+      days: order.days,
+      name: order.planName || 'Mein Panel',
+    });
+    if (!made.ok) return made;
+    order.status = 'done';
+    order.paid = true;
+    order.kind = 'panel';
+    order.nodeId = made.node.id;
+    order.paidAt = new Date().toISOString();
+    saveDB();
+    return { ok: true, order, node: made.node, kind: 'panel' };
+  }
   const made = createGameServer(buyer, order.planName || 'Server', {
     planId: order.planId,
     ram: order.ram,
@@ -509,6 +540,72 @@ function createGameServer(user, name, extra = {}) {
   DB.servers.push(rec);
   saveDB();
   return { ok: true, server: publicServer(rec, user) };
+}
+
+function publicNode(n) {
+  return {
+    id: n.id,
+    name: n.name || 'Mein Panel',
+    plan: n.planId || 'panel',
+    host: n.host || '',
+    sshPort: n.sshPort || 22,
+    sshUser: n.sshUser || 'root',
+    hasPass: !!n.sshPass,
+    connected: !!n.connected,
+    lastMsg: n.lastMsg || '',
+    lastCheck: n.lastCheck || null,
+    expiresAt: n.expiresAt || null,
+    createdAt: n.createdAt,
+  };
+}
+
+function canUseNode(user, node) {
+  if (!user || !node) return false;
+  if (user.role === 'admin') return true;
+  return node.ownerId === user.id;
+}
+
+function createPanelLicense(user, extra = {}) {
+  const rec = {
+    id: crypto.randomBytes(4).toString('hex'),
+    ownerId: user.id,
+    planId: extra.planId || 'panel',
+    name: String(extra.name || 'Mein Panel').trim().slice(0, 40) || 'Mein Panel',
+    host: '',
+    sshPort: 22,
+    sshUser: 'root',
+    sshPass: '',
+    connected: false,
+    lastMsg: '',
+    lastCheck: null,
+    expiresAt: extra.days ? new Date(Date.now() + extra.days * 86400000).toISOString() : null,
+    createdAt: new Date().toISOString(),
+  };
+  DB.nodes.push(rec);
+  saveDB();
+  return { ok: true, node: publicNode(rec) };
+}
+
+function validRemoteHost(host) {
+  const s = String(host || '').trim();
+  if (!s || s.length > 253) return false;
+  if (!/^[a-zA-Z0-9.-]+$/.test(s)) return false;
+  if (/^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.)/i.test(s)) return false;
+  return true;
+}
+
+function probeHost(host, port, ms = 5000) {
+  return new Promise((resolve) => {
+    const sock = net.connect({ host, port, timeout: ms }, () => {
+      sock.destroy();
+      resolve({ ok: true });
+    });
+    sock.on('error', (e) => resolve({ ok: false, msg: e.message || 'Nicht erreichbar.' }));
+    sock.on('timeout', () => {
+      sock.destroy();
+      resolve({ ok: false, msg: 'Keine Antwort vom Root-Server.' });
+    });
+  });
 }
 
 function isInsideServersRoot(dir) {
@@ -1364,6 +1461,15 @@ const server = http.createServer(async (req, res) => {
     const plan = shopPlans().find((x) => x.id === b.planId);
     if (!plan) return json(res, { ok: false, msg: 'Paket nicht gefunden.' }, 404);
     if (user.role === 'admin' && b.instant) {
+      if (isPanelPlan(plan)) {
+        const made = createPanelLicense(user, {
+          planId: plan.id,
+          days: plan.days,
+          name: plan.name,
+        });
+        if (!made.ok) return json(res, made, 400);
+        return json(res, { ok: true, instant: true, kind: 'panel', node: made.node });
+      }
       const made = createGameServer(user, plan.name, {
         planId: plan.id,
         ram: plan.ram,
@@ -1420,6 +1526,7 @@ const server = http.createServer(async (req, res) => {
       ram: plan.ram,
       players: plan.players,
       days: plan.days,
+      kind: isPanelPlan(plan) ? 'panel' : 'mc',
       payMethod: 'paysafecard',
       status: 'pending',
       paid: false,
@@ -1619,6 +1726,48 @@ const server = http.createServer(async (req, res) => {
     const b = await parseBody(req);
     return json(res, assignToAccount(rec, b.email || b.username, user));
   }
+  if (p === '/api/nodes' && req.method === 'GET') {
+    const list = (DB.nodes || []).filter((n) => canUseNode(user, n)).map(publicNode);
+    return json(res, { ok: true, nodes: list });
+  }
+  if (p.startsWith('/api/nodes/') && p.endsWith('/connect') && req.method === 'POST') {
+    const rec = (DB.nodes || []).find((n) => n.id === p.split('/')[3]);
+    if (!rec) return json(res, { ok: false, msg: 'Panel nicht gefunden.' }, 404);
+    if (!canUseNode(user, rec)) return json(res, { ok: false, msg: 'Kein Zugriff.' }, 403);
+    const b = await parseBody(req);
+    const host = String(b.host || '').trim();
+    const sshPort = Math.max(1, Math.min(65535, parseInt(b.port || b.sshPort || 22, 10) || 22));
+    const sshUser = String(b.user || b.sshUser || 'root').trim().slice(0, 64) || 'root';
+    const sshPass = String(b.password || b.sshPass || '');
+    const name = String(b.name || rec.name || 'Mein Panel').trim().slice(0, 40);
+    if (!validRemoteHost(host)) {
+      return json(res, { ok: false, msg: 'Ungültige IP oder Domain. Kein lokales Netz.' }, 400);
+    }
+    rec.name = name;
+    rec.host = host;
+    rec.sshPort = sshPort;
+    rec.sshUser = sshUser;
+    if (sshPass) rec.sshPass = sshPass;
+    const probe = await probeHost(host, sshPort);
+    rec.connected = !!probe.ok;
+    rec.lastCheck = new Date().toISOString();
+    rec.lastMsg = probe.ok
+      ? 'Root-Server erreichbar. Panel ist verbunden.'
+      : ('Gespeichert, aber SSH nicht erreichbar: ' + (probe.msg || 'Timeout'));
+    saveDB();
+    return json(res, { ok: true, node: publicNode(rec), reachable: probe.ok, msg: rec.lastMsg });
+  }
+  if (p.startsWith('/api/nodes/') && req.method === 'DELETE') {
+    const id = p.split('/')[3];
+    const rec = (DB.nodes || []).find((n) => n.id === id);
+    if (!rec) return json(res, { ok: false, msg: 'Panel nicht gefunden.' }, 404);
+    if (!user || (user.role !== 'admin' && rec.ownerId !== user.id)) {
+      return json(res, { ok: false, msg: 'Kein Zugriff.' }, 403);
+    }
+    DB.nodes = DB.nodes.filter((n) => n.id !== id);
+    saveDB();
+    return json(res, { ok: true });
+  }
   if (p.startsWith('/api/servers/') && req.method === 'DELETE') {
     const id = p.split('/').pop();
     const out = deleteGameServer(user, id);
@@ -1629,7 +1778,7 @@ const server = http.createServer(async (req, res) => {
   const serverRec = DB.servers.find((s) => s.id === sid) || null;
   const needsServer = ![
     '/api/users', '/api/settings', '/api/modlog/stats', '/api/plugins/catalog', '/api/plugins/search',
-  ].includes(p) && !p.startsWith('/api/users/') && !p.startsWith('/api/tickets') && !p.startsWith('/api/pay') && !p.startsWith('/api/shop');
+  ].includes(p) && !p.startsWith('/api/users/') && !p.startsWith('/api/tickets') && !p.startsWith('/api/pay') && !p.startsWith('/api/shop') && !p.startsWith('/api/nodes');
 
   if (needsServer && !canUseServer(user, serverRec)) {
     return json(res, { ok: false, msg: 'Kein Server gewählt oder kein Zugriff.' }, 403);
