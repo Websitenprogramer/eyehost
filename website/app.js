@@ -1,3 +1,25 @@
+function siteRoot() {
+  let path = location.pathname.replace(/\/(?:index|me)\.html$/i, '/');
+  if (!path.endsWith('/')) path += '/';
+  return path;
+}
+
+if (/\/index\.html$/i.test(location.pathname)) {
+  history.replaceState(null, '', siteRoot() + location.search + location.hash);
+}
+
+function goShop(ev) {
+  if (ev) ev.preventDefault();
+  const home = location.origin + siteRoot();
+  if (PAGE === 'shop') {
+    history.replaceState(null, '', siteRoot() + location.search);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return false;
+  }
+  location.href = home;
+  return false;
+}
+
 function resolveApi() {
   const configured = String(window.EYEHOST_API || '').replace(/\/$/, '');
   if (!configured) return '';
