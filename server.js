@@ -1285,12 +1285,12 @@ const server = http.createServer(async (req, res) => {
     const password = String(b.password || '');
     if (username.length < 3 || username.length > 20) return json(res, { ok: false, msg: 'Name: 3–20 Zeichen.' }, 400);
     if (!/^[a-zA-Z0-9_]+$/.test(username)) return json(res, { ok: false, msg: 'Nur Buchstaben, Zahlen und _.' }, 400);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(res, { ok: false, msg: 'Bitte eine echte E-Mail angeben.' }, 400);
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(res, { ok: false, msg: 'Bitte eine echte E-Mail angeben.' }, 400);
     if (password.length < 4) return json(res, { ok: false, msg: 'Passwort mindestens 4 Zeichen.' }, 400);
     if (DB.users.find((u) => u.username.toLowerCase() === username.toLowerCase())) {
       return json(res, { ok: false, msg: 'Benutzername schon vergeben.' }, 400);
     }
-    if (findUserByEmail(email)) return json(res, { ok: false, msg: 'E-Mail schon registriert.' }, 400);
+    if (email && findUserByEmail(email)) return json(res, { ok: false, msg: 'E-Mail schon registriert.' }, 400);
     const user = {
       id: crypto.randomBytes(8).toString('hex'),
       username,

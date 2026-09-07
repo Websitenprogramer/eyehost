@@ -87,7 +87,7 @@ function openAuth(mode) {
   authMode = mode;
   $('auth-title').textContent = mode === 'register' ? 'Registrieren' : 'Anmelden';
   $('auth-go').textContent = mode === 'register' ? 'Konto erstellen' : 'Anmelden';
-  if ($('au-mail')) $('au-mail').style.display = mode === 'register' ? '' : 'none';
+  if ($('au-mail')) $('au-mail').style.display = 'none';
   $('auth-err').textContent = '';
   $('auth-modal').classList.add('on');
 }
@@ -99,9 +99,8 @@ function closeAuth() {
 async function submitAuth() {
   const username = $('au-user').value.trim();
   const password = $('au-pass').value;
-  const email = $('au-mail') ? $('au-mail').value.trim() : '';
   const path = authMode === 'register' ? '/api/register' : '/api/login';
-  const body = authMode === 'register' ? { username, password, email } : { username, password };
+  const body = { username, password };
   const r = await api(path, 'POST', body);
   if (!r.ok) {
     $('auth-err').textContent = r.msg || 'Fehler';
